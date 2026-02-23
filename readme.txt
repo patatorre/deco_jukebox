@@ -1,9 +1,9 @@
 Deco Jukebox
 
 This is a Python jukebox designed for a touch-screen interface. Just point it to your iTunes library and go!
-The top buttons changes the view between Singles / Tracks / Albums. The interface lets you sort by epochs, genres,
-and artists. The middle panel will contain a random selection of tracks, or show all the albums. In track view,
-add to the playlist by tapping a song label, or add all by tapping "add all".
+The top buttons changes the view between Singles / Tracks / Albums. The interface lets you sort by epochs,
+genres, and artists. The middle panel will contain a random selection of tracks, or show all the albums.
+In track view, add to the playlist by tapping a song label, or add all by tapping "add all".
 
 Quick start:
 1) Install python (3.12 is current as of this writing) and the packages listed in requirements.txt
@@ -26,11 +26,11 @@ that change things and save the changes. I suggest using this on an album-to-alb
 Just don't put your library as the top path. You would regret tagging everything as 'pennsylvania polka'.
 
 Genres:
-The 'genre' buttons are specified in "jukebox.cfg" (the "genres_list" item). I recommend not exceeding nine genres
-in the list. If you exceed this number, on the 1600x900 resolution you will start losing buttons. All of these
-genres can be custom genres, all you have to do is create a list of sub-genres and throw it in the
-user_classifications/genres/ folder. Any song that *matches* the genre or sub-genre therein will show up
-when that genre button is lit. See the readme in "user_classifications" for more details.
+The 'genre' buttons are specified in "jukebox.cfg" (the "genres_list" item). I recommend not exceeding nine
+genres in the list. If you exceed this number, on the 1600x900 resolution you will start losing buttons.
+All of these genres can be custom genres, all you have to do is create a list of sub-genres and throw it
+in the user_classifications/genres/ folder. Any song that *matches* the genre or sub-genre therein will
+show up when that genre button is lit. See the readme in "user_classifications" for more details.
 
 Album covers:
 You have to provide the cover art somehow. I am currently working on a scraper of sorts. The album art live in
@@ -42,7 +42,7 @@ Font:
 The font that gives this jukebox its art-deco look is called 'Lavoir' and can be found here:
 https://fontlibrary.org/en/font/lavoir
 If this font is not installed (on Ubuntu this means at root level), then the jukebox should default to
-one of the obvious fonts.
+one of the obvious fonts. But it won't look as cool.
 
 Windows / Linux:
 It should work in both. I have less data about stability in Windows.
