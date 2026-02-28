@@ -1859,7 +1859,6 @@ class ControlButtonPanel:
 
     def play_media(self, play_item):
         global player
-        global eos_time, eos_flag
 
         play_progress_bar.start_timer(play_item)
 
@@ -1874,29 +1873,33 @@ class ControlButtonPanel:
                 audacity_client.record()
         else:
             # If there's an old player, delete it
-            if player is not None:
-                player.delete()
-            # Create a brand new player
-            player = pyglet.media.Player()
-
-            # Attach event handlers to the new player
-            @player.event
-            def on_eos():
-                print('on_eos() ----')
-                # Handle end of current source (if you want to loop within the same file, etc.)
-                # For single-file playback, you might just ignore or restart.
-                # Since we'll rely on on_player_eos, we can pass.
-                pass
-
-            @player.event
-            def on_player_eos():
-
-                # Queue the next file
-                # next_file = music_files[times_played % 2]
-                # print(f'Queuing next: {next_file}')
-                # play_media(next_file)
-                eos_flag = 1
-                eos_time = time.time()
+            # if player is not None:
+            #     player.delete()
+            #     time.sleep(2)
+            # # Create a brand new player
+            # player = pyglet.media.Player()
+            #
+            # # Attach event handlers to the new player
+            # @player.event
+            # def on_eos():
+            #     global eos_time, eos_flag
+            #     print('play_media handler on_eos() ----')
+            #     # Handle end of current source (if you want to loop within the same file, etc.)
+            #     # For single-file playback, you might just ignore or restart.
+            #     # Since we'll rely on on_player_eos, we can pass.
+            #     eos_flag = 1
+            #     eos_time = time.time()
+            #
+            # @player.event
+            # def on_player_eos():
+            #     global eos_time, eos_flag
+            #     print('play_media handler on_player_eos() ----')
+            #     # Queue the next file
+            #     # next_file = music_files[times_played % 2]
+            #     # print(f'Queuing next: {next_file}')
+            #     # play_media(next_file)
+            #     eos_flag = 1
+            #     eos_time = time.time()
 
             music = get_media(play_item)
             player.queue(music)
@@ -2911,21 +2914,21 @@ def on_eos(): # end of one song, when all of playlist was queued (TO BE DEPRECAT
     eos_flag = 1
     eos_time = time.time()
 
-    if player.playing:
-        player.pause()
-        player.seek(0)
-        time.sleep(0.1)
-        # Sometimes player.next_source() at last song hangs instead of generating on_player_eos event
-        # so, delete it and respawn it to prevent this from happening
-        # player.delete()
-        # player = pyglet.media.Player()
-        print('on_eos() - made it to the try statement')
-        try:
-            player.next_source()
-        except:
-            print("on_eos() player.next_source() generated error")
-            pass
-        player.seek(0)
+    # if player.playing:
+    #     player.pause()
+    #     player.seek(0)
+    #     time.sleep(0.1)
+    #     # Sometimes player.next_source() at last song hangs instead of generating on_player_eos event
+    #     # so, delete it and respawn it to prevent this from happening
+    #     # player.delete()
+    #     # player = pyglet.media.Player()
+    #     print('on_eos() - made it to the try statement')
+    #     try:
+    #         player.next_source()
+    #     except:
+    #         print("on_eos() player.next_source() generated error")
+    #         pass
+        #player.seek(0)
     # BUG ALERT: sometimes we get on_eos() but not on_player_eos(). Gets stuck in a weird unreachable state.
     # ze_playlist.scroll_down_one(play_control_buttons)
     # ze_playlist.update_visible_list()
@@ -3202,16 +3205,16 @@ def on_mouse_press(x, y, button, modifiers):
                         ze_playlist.update_visible_list(0,0)
                     else:
                         if player.playing:
-                            # new method: kill the player and generate an eos "event"
-                            player.pause()
-                            time.sleep(0.1)
-                            player_status(player)
-                            eos_flag = 1
-                            eos_time = time.time()
 
-                        #     player.seek(0)
-                        #     time.sleep(0.1)
-                        # player.next_source() # should generate eos
+                            player.pause()
+                            time.sleep(0.05)
+                            player_status(player)
+                            # eos_flag = 1
+                            # eos_time = time.time()
+
+                            player.seek(0)
+                            time.sleep(0.05)
+                            player.next_source() # should generate eos
                         # time.sleep(0.1)
 
             elif button_index == 2: # shuffle
@@ -3324,12 +3327,12 @@ def on_draw():
                 playlist_page_buttons.buttons[2]['active'] = 1 # 'clear'
             else:  # cue up next song
                 # Clean up current source
-                # if player.playing:
-                #     player.pause()
-                # time.sleep(0.1)
-                # while player.source:
-                #     player.next_source() # flush
-                # time.sleep(0.1)  # attempt to resolve a race condition that results in "interrupted by signal 11:SIGSEGV" error
+                if player.playing:
+                    player.pause()
+                time.sleep(0.1)
+                while player.source:
+                    player.next_source() # flush
+                time.sleep(0.1)  # attempt to resolve a race condition that results in "interrupted by signal 11:SIGSEGV" error
                 play_item = playlist[ze_playlist.topsong_index]
                 print(f'on_draw() eos queuing up: {playlist[ze_playlist.topsong_index]["filepath"]}')
                 play_control_buttons.play_media(play_item)
