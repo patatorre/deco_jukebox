@@ -34,9 +34,9 @@ show up when that genre button is lit. See the readme in "user_classifications" 
 
 Album covers:
 You have to provide the cover art somehow. I am currently working on a scraper of sorts. The album art live in
-graphics/album_covers/ and should be .jpg. File names need to match the album title as it is found in the music files
-metadata for that album. This has not posed a problem for me except for 'Greatest Hits' which is all too common.
-Solution for that would be to force unique album titles in the metadata. I just let it ride.
+graphics/album_covers/ and should be .jpg. File names need to match the album title as it is found in the
+music files metadata for that album. This has not posed a problem for me except for 'Greatest Hits' which is
+all too common. Solution for that would be to force unique album titles in the metadata. I just let it ride.
 
 Font:
 The font that gives this jukebox its art-deco look is called 'Lavoir' and can be found here:

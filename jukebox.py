@@ -2,7 +2,7 @@
 # Deco Jukebox
 #
 # A touchscreen jukebox in Python
-# by Patrick Dumais
+# by Patrick Dumais, patatorre "at" proton.me
 # Version 0.5
 # Feb 2026
 #
@@ -282,9 +282,6 @@ stop_button = pyglet.image.load(stop_button_file)
 definitions_folder = os.path.join(app_folder, "user_classifications")
 
 
-
-
-
 class JuicedButton:
     def __init__(self, x, y, image_name_static, image_name_juiced):
         self.visible = 1
@@ -318,7 +315,6 @@ class JuicedButton:
         else:
             self.sprite_static.draw()
             self.juiced = 0 # reset the juice, though it may be already off
-
 
 
 # Selector button panel: epochs and genres -----------------
@@ -1862,13 +1858,12 @@ class ControlButtonPanel:
         return(hit_button_index_plus_one)
 
     def play_media(self, play_item):
+        global player
+        global eos_time, eos_flag
+
         play_progress_bar.start_timer(play_item)
-        if play_item['filepath'][0] == '/':  # local music track, should be
-            music = get_media(play_item)
-            player.queue(music)
-            player.play()
-            play_control_buttons.is_spotify_track = 0
-        elif play_item['filepath'][0:7] == 'spotify':  # pass this on to the spotify app
+
+        if play_item['filepath'][0:7] == 'spotify':  # pass this on to the spotify app
             print(f'Spotify tune {play_item["filepath"]}')
             spotify_client.play(play_item['filepath'])
             spotify_client.set_stop_time(play_item['duration_s'])  # we need to check, it won't stop by itself
@@ -1877,7 +1872,36 @@ class ControlButtonPanel:
                 audacity_client.stop()  # if song got skipped, audacity is still recording
                 audacity_client.clearTrack()
                 audacity_client.record()
+        else:
+            # If there's an old player, delete it
+            if player is not None:
+                player.delete()
+            # Create a brand new player
+            player = pyglet.media.Player()
 
+            # Attach event handlers to the new player
+            @player.event
+            def on_eos():
+                print('on_eos() ----')
+                # Handle end of current source (if you want to loop within the same file, etc.)
+                # For single-file playback, you might just ignore or restart.
+                # Since we'll rely on on_player_eos, we can pass.
+                pass
+
+            @player.event
+            def on_player_eos():
+
+                # Queue the next file
+                # next_file = music_files[times_played % 2]
+                # print(f'Queuing next: {next_file}')
+                # play_media(next_file)
+                eos_flag = 1
+                eos_time = time.time()
+
+            music = get_media(play_item)
+            player.queue(music)
+            player.play()
+            play_control_buttons.is_spotify_track = 0
 #### End class ControlButtonPanel`
 
 class ProgressBar:
@@ -2782,27 +2806,9 @@ def player_status(player):
     print(f'is_playing:{is_playing}, has_source:{has_source}, current_time:{current_time}')
 
 
-
-# def import_and_stuff():
-#     global all_music
-#     global albums_list
-#     global all_singles_list
-#     global still_loading
-#     # all_tunes_paths = list_files_in_nested_folders(music_root_folder)
-#     map_artists_to_genre, map_albums_to_genre = read_genre_mappings()
-#     all_music = import_music([music_root_folder], map_artists_to_genre, map_albums_to_genre)
-#     print(map_albums_to_genre)
-#     print(map_artists_to_genre)
-#     albums_list, all_singles_list = build_albums_list(all_music)
-#     still_loading = 0
-#     return(0)
-
 # ============================================ Main ========================================
 
-# title, artist, album, year, genre, error_flag = get_tune_metadata(test_file)
-# print(f'{test_file}')
-# print(f'album={album}, genre={genre}')
-# still_loading = 1
+
 n_visited = 0
 n_read = 0
 eos_flag = 0 # set to 1 whenever get get on_eos or on_player_eos
@@ -2835,8 +2841,9 @@ label2 = pyglet.text.Label('Loaded 0 files from 0 in directory',
 label2_width = label2.content_width
 # label2.x = (window.width - label2_width) // 2
 
-global draw_its
+#global draw_its
 draw_its = 0
+
 @window.event
 def on_draw():
     global draw_its
@@ -2888,7 +2895,7 @@ artists_page_buttons = ControlButtonPanel(artists_panel_page_buttons_x, artists_
 playlist_page_buttons = ControlButtonPanel(play_control_buttons_x, play_control_buttons_y - 80, button_list=['up', 'down', 'clear'], button_set=1)
 
 #window = pyglet.window.Window(width=screen_width, height=screen_height, fullscreen=True)
-pyglet.options['audio'] = ('pulse', ) # trying something different than openal, since we're getting problems
+# pyglet.options['audio'] = ('pulse', ) # trying something different than openal, since we're getting problems
 #import pyglet.media
 player = pyglet.media.Player()
 audio_driver = pyglet.media.get_audio_driver()
@@ -2899,7 +2906,7 @@ print(f'Pyglet.options(audio) = {pyglet.options["audio"]}, driver = {audio_drive
 def on_eos(): # end of one song, when all of playlist was queued (TO BE DEPRECATED with spotify option,
     # because we need to check if the current song needs to be played by the spotify player)
     print('on_eos() ----')
-    global eos_flag, eos_time
+    global eos_flag, eos_time, player
     player_status(player)
     eos_flag = 1
     eos_time = time.time()
@@ -2908,6 +2915,10 @@ def on_eos(): # end of one song, when all of playlist was queued (TO BE DEPRECAT
         player.pause()
         player.seek(0)
         time.sleep(0.1)
+        # Sometimes player.next_source() at last song hangs instead of generating on_player_eos event
+        # so, delete it and respawn it to prevent this from happening
+        # player.delete()
+        # player = pyglet.media.Player()
         print('on_eos() - made it to the try statement')
         try:
             player.next_source()
@@ -2962,6 +2973,8 @@ def on_player_eos(): # end of all songs
 @window.event
 def on_mouse_press(x, y, button, modifiers):
     global playlist
+    global eos_flag, eos_time, player
+
     pause_start = time.time() # init this var
     print(f"mouse press at {x}, {y}")
     play_control_button_click = play_control_buttons.process_click(x, y)
@@ -3189,12 +3202,17 @@ def on_mouse_press(x, y, button, modifiers):
                         ze_playlist.update_visible_list(0,0)
                     else:
                         if player.playing:
+                            # new method: kill the player and generate an eos "event"
                             player.pause()
                             time.sleep(0.1)
-                            player.seek(0)
-                            time.sleep(0.1)
-                        player.next_source() # should generate eos
-                        time.sleep(0.1)
+                            player_status(player)
+                            eos_flag = 1
+                            eos_time = time.time()
+
+                        #     player.seek(0)
+                        #     time.sleep(0.1)
+                        # player.next_source() # should generate eos
+                        # time.sleep(0.1)
 
             elif button_index == 2: # shuffle
                 playlist = shuffle_playlist(playlist, ze_playlist.topsong_index, play_control_buttons.playing)
@@ -3318,16 +3336,5 @@ def on_draw():
                 # time.sleep(0.1) # ???
             ze_playlist.update_visible_list(0,0)
 
-
-
-# # Test load music file (there were problems with path not being found
-# music_file = '/home/patrick/Python/jukebox/musik/1977_1979/16 We Will Rock You.m4a'
-# directory_path = os.path.dirname(os.path.realpath(music_file))
-# music_file_name = os.path.basename(music_file)
-# pyglet.resource.path = [directory_path]
-# pyglet.resource.reindex()
-# print("Resource Path:", pyglet.resource.path)
-# music = pyglet.resource.media(music_file_name)
-# music.play()
 
 pyglet.app.run()
