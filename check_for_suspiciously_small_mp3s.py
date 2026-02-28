@@ -1,3 +1,8 @@
+# Looks at mp3 files in target folder to weed out invalid files
+# Patrick Dumais
+# patatorre "at" proton.me
+# Feb 2026
+
 import os
 
 
@@ -19,7 +24,7 @@ def list_files_in_nested_folders(root_folder):
     return(musics)
 
 
-# import raw music files, get metadata and make a big list
+# get all files paths from start directory, includind nested
 def import_music(start_folders):
     # first, find all the music files
     all_paths = []
@@ -32,8 +37,9 @@ def import_music(start_folders):
     return(all_paths)
 
 
+##### MAIN ######################################################################
 
-target_album_path_list = ["/home/patrick/Music/spotify_tracks/"]
+target_album_path_list = ["/home/patrick/Music/spotify_tracks/"]  # must be a list
 album_music = import_music(target_album_path_list)
 
 for music_file in album_music:

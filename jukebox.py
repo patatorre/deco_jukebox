@@ -22,7 +22,6 @@ from unidecode import unidecode
 from mutagen.id3 import ID3TimeStamp
 import spotify_controller
 import audacity_controller
-import threading
 
 # display is customized only for the resolutions listed below
 resolutions = ['1600x900', '1920x1080']
