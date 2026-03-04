@@ -29,8 +29,7 @@ Windows / Linux:
 It should work in both. I have less data about stability in Windows.
 
 Known issues:
-Sometimes, on some hardware, the Pyglet player will generate an on_eos() event as expected but will crash while flushing the queue and not make it to generate an on_player_eos(). I am currently considering using another player library such as python-vlc. This appears to be more likely if mp3s are involved (as in:
-seems more stable if only m4a's are played).On my HP Touchsmart 310 PC running Ubuntu 24.04, this seems to happen after a few dozen songs are played.
+Sometimes, on some hardware, the Pyglet player will generate an on_eos() event as expected but will crash while flushing the queue and not make it to generate an on_player_eos(). I am currently considering using another player library such as python-vlc. This appears to be more likely if mp3s are involved (as in: seems more stable if only m4a's are played).On my HP Touchsmart 310 PC running Ubuntu 24.04, this seems to happen after a few dozen songs are played.
 
 Enjoy!
 
