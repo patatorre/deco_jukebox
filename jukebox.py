@@ -23,7 +23,7 @@ from mutagen.id3 import ID3TimeStamp
 import spotify_controller
 import audacity_controller
 import vlc
-from typing import Union
+
 
 # display is customized only for the resolutions listed below
 resolutions = ['1600x900', '1920x1080']
@@ -152,6 +152,17 @@ def read_ini():
     return(config)
 
 config = read_ini()
+
+if config['spotify_enable'] == 'on':
+    spotify_id = os.getenv('SPOTIFY_CLIENT_ID')
+    spotify_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
+    spotify_playlist_id = os.getenv('SPOTIFY_PLAYLIST_ID')
+    if spotify_id == None:
+        print('*** WARNING *** SPOTIFY_CLIENT_ID environmental variable not set.')
+    if spotify_secret == None:
+        print('*** WARNING *** SPOTIFY_CLIENT_SECRET environmental variable not set.')
+    if spotify_playlist_id == None:
+        print('*** WARNING *** SPOTIFY_PLAYLIST_ID environmental variable not set.')
 
 buttons_font_size = 20
 buttons_font_size_smaller = 14
@@ -298,6 +309,9 @@ class MediaPlayer:
 
     def play(self):
         self.this_player.play()
+
+    def stop(self):
+        self.this_player.stop()
 
     def pause(self):
         self.this_player.pause()
@@ -3101,6 +3115,7 @@ def on_mouse_press(x, y, button, modifiers):
         if playlist_page_button_click == 3: # clear/stop pressed
             if play_control_buttons.playing: # stop, don't clear
                 play_control_buttons.playing = 0
+                player.pause()
                 player.flush_queue()
                 # while not (player.source == None): # flush queue
                 #     player.next_source()
@@ -3110,11 +3125,11 @@ def on_mouse_press(x, y, button, modifiers):
                     player.spotify_client.play_pause()
             else: # clear playlist
                 player.playlist = []
-                player.pause()
+                player.stop()
                 #player.queue = []
-                # flush the queue
-                while not (player.source == None):
-                    player.next_source()
+                # flush the queue DEPRECATED
+                # while not (player.source == None):
+                #     player.next_source()
                 #player.delete() # doesn't do anything?
                 play_control_buttons.playing = 0
                 # flip to first page of playlist, since it's empty now
