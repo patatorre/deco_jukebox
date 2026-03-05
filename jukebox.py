@@ -4,7 +4,7 @@
 # A touchscreen jukebox in Python
 # by Patrick Dumais, patatorre "at" proton.me
 # Version 0.6
-# Feb 2026
+# March 2026
 #
 # sudo buy me a coffee:
 # https://buymeacoffee.com/patrickdumais

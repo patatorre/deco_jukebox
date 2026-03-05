@@ -1,5 +1,7 @@
-setuptools~=44.1.1
 pyglet~=2.1.11
-requests~=2.32.5
 mutagen~=1.47.0
+urllib3~=2.6.2
+charset-normalizer~=3.4.4
 Unidecode~=1.4.0
+requests~=2.32.5
+python-vlc~=3.0.21203
