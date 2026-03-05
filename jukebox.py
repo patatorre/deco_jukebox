@@ -3,7 +3,7 @@
 #
 # A touchscreen jukebox in Python
 # by Patrick Dumais, patatorre "at" proton.me
-# Version 0.5
+# Version 0.6
 # Feb 2026
 #
 # sudo buy me a coffee:
@@ -22,6 +22,8 @@ from unidecode import unidecode
 from mutagen.id3 import ID3TimeStamp
 import spotify_controller
 import audacity_controller
+import vlc
+from typing import Union
 
 # display is customized only for the resolutions listed below
 resolutions = ['1600x900', '1920x1080']
@@ -158,17 +160,7 @@ labels_title_font_size = 12
 labels_title_font_size_smaller = 9
 big_album_label_size = 12
 
-playlist = []
 
-if config['spotify_enable'] == 'on':
-    spotify_client = spotify_controller.SpotifyDBusController()
-    token = spotify_controller.get_user_token()
-    try:
-        playlist_id = config['spotify_playlist_id']
-    except:
-        playlist_id = ''
-    tracks = spotify_controller.spotify_get_playlist(token, playlist_id)
-    playlist = tracks
 try:
     if config['scraping_enable'] == 'on':
         audacity_client = audacity_controller.AudacityPipeController()
@@ -279,6 +271,113 @@ clear_button_juiced = pyglet.image.load(clear_button_juiced_file)
 stop_button = pyglet.image.load(stop_button_file)
 
 definitions_folder = os.path.join(app_folder, "user_classifications")
+
+class MediaPlayer:
+    def __init__(self, config):
+        self.this_player = vlc.MediaPlayer()
+        self.play_progress_bar = ProgressBar(playlist_panel_edge_left, playing_highlight_y-15, playlist_panel_label_width)
+        self.eos_flag = False
+        self.eos_time = None
+        self.is_spotify_track = 0
+        self.playlist = []
+        self.playing = 0
+        self.stop_time = time.time()
+        self.pause_start = time.time()
+
+        if config['spotify_enable'] == 'on':
+            self.spotify_enable = True
+            self.spotify_client = spotify_controller.SpotifyDBusController()
+            token = spotify_controller.get_user_token()
+            try:
+                playlist_id = config['spotify_playlist_id']
+            except:
+                playlist_id = ''
+            tracks = spotify_controller.spotify_get_playlist(token, playlist_id)
+            self.playlist = tracks
+
+
+    def play(self):
+        self.this_player.play()
+
+    def pause(self):
+        self.this_player.pause()
+
+    def play_pause(self):
+        if self.is_spotify_track:
+            self.spotify_client.PlayPause()
+        else:
+            if self.is_playing():
+                self.pause()
+                self.playing = 0
+                self.pause_start = time.time()
+            else:
+                self.playing = 1
+                self.play()
+                paused_time = time.time() - self.pause_start
+                self.stop_time += paused_time
+
+    def queue(self, song_path):
+        #media = vlc.Media(song_path)
+        self.this_player.set_media(vlc.Media(song_path))
+
+    def flush_queue(self):
+        pass
+
+    def is_playing(self):
+        return(self.this_player.is_playing())
+
+    def time(self):
+        return(self.this_player.get_time())
+
+    def source(self):
+        ze_media = player.get_media()
+        return(ze_media)
+
+    def status(self):
+            print('player_status() --')
+            # Check if player is currently playing
+            is_playing = self.is_playing()  # Returns True/False
+            # Check if player has a source loaded
+            has_source = player.source() is not None
+            # Get current playback time (in seconds)
+            current_time = self.time()
+            print(f'is_playing:{is_playing}, has_source:{has_source}, current_time:{current_time}')
+
+    def play_media(self, play_item):
+
+        self.play_progress_bar.start_timer(play_item)
+
+        if play_item['filepath'][0:7] == 'spotify':  # pass this on to the spotify app
+            print(f'Spotify tune {play_item["filepath"]}')
+            self.spotify_client.play(play_item['filepath'])
+            self.spotify_client.set_stop_time(play_item['duration_s'])  # we need to check, it won't stop by itself
+            self.is_spotify_track = 1
+            if config['scraping_enable'] == 'on':
+                audacity_client.stop()  # if song got skipped, audacity is still recording
+                audacity_client.clearTrack()
+                audacity_client.record()
+        else:
+            #music = get_media(play_item)
+            self.queue(play_item['filepath'])
+            self.set_stop_time(play_item['duration_s'])
+            player.play()
+            self.is_spotify_track = 0
+
+    def is_track_done(self):
+        if player.is_spotify_track > 0:
+            return(self.spotify_client.is_track_done())
+        else: # local
+            now = time.time()
+            if now > self.stop_time:
+                return True
+            else:
+                return False
+
+    def set_stop_time(self, duration_s):
+        now = time.time()
+        self.stop_time = now + duration_s
+
+
 
 
 class JuicedButton:
@@ -943,10 +1042,7 @@ class LabelPanel:
             clicked_label['juiced'] = 1
             clicked_label['juice_start_time'] = time.time()
             # # Add song to playlist
-            #playlist.append(playlist_entry)
             ze_playlist.add_to_playlist(playlist_entry)
-            # Remove from visible list, otherwise it's still clickable *** EH, DON'T, IT'S CONFUSING
-            #self.visible_labels[entry_idx]['visible'] = 0
 
         return(hit_flag)
 
@@ -958,7 +1054,7 @@ class LabelPanel:
                 print(f'adding to playlist: {playlist_entry["filepath"]}')
                 # # animate, somehow
                 # # Add song to playlist
-                playlist.append(playlist_entry)
+                player.playlist.append(playlist_entry)
                 # Remove from visible list, otherwise it's still clickable **** DEPRECATED
                 # clicked_label['visible'] = 0
 
@@ -1252,7 +1348,7 @@ class AlbumPanel:
                 print(f'adding to playlist: {playlist_entry["filepath"]}')
                 # # animate, somehow
                 # # Add song to playlist
-                playlist.append(playlist_entry)
+                player.playlist.append(playlist_entry)
 
             else: # no labels clicked, let's see the button
                 if self.back_button.clicked(click_x, click_y): # "back" button clicked, revert view
@@ -1302,7 +1398,7 @@ class AlbumPanel:
             #         # # Add song to playlist
             #         playlist.append(playlist_entry)
             for this_song in self.songlist:
-                playlist.append(this_song)
+                player.playlist.append(this_song)
                     # n_visible += 1
             #print(f'n_visible = {n_visible}')
 
@@ -1552,7 +1648,7 @@ class PlayList:
                 visible_flag = 0
 
             else:
-                print(playlist[idx])
+                # print(playlist_at_startup[idx])
                 title = playlist_at_startup[idx]['title']
                 artist = playlist_at_startup[idx]['artist']
                 album = playlist_at_startup[idx]['album']
@@ -1591,7 +1687,7 @@ class PlayList:
         print(f'Scroll_down_one() topsong index is {self.topsong_index}')
         last_one = 0
         self.topsong_index = self.topsong_index + 1
-        if self.topsong_index >= len(playlist):
+        if self.topsong_index >= len(player.playlist):
             print("Queue is empty")
             this_control_buttons.playing = 0
             this_control_buttons.buttons[0]['flag'] = 0
@@ -1610,10 +1706,10 @@ class PlayList:
     # should be the result of a page change
     def update_visible_list(self, show_list_end, juice_last_entry):
         print(f'PlayList.update_visible_list() playing = {play_control_buttons.playing}, show_list_end = {show_list_end}, juice_last_entry = {juice_last_entry}')
-        len_playlist = len(playlist)
+        len_playlist = len(player.playlist)
         label_idx_end = self.songs_per_page - 1
         if play_control_buttons.playing: # playing song is at top always
-            playlist_entry = playlist[self.topsong_index] # topsong is playing song
+            playlist_entry = player.playlist[self.topsong_index] # topsong is playing song
             label_entry = self.visible_labels[0]
             playlist_to_label_entry(playlist_entry, label_entry)
             last_page_index = math.ceil((len_playlist - self.topsong_index - 1) / (self.songs_per_page - 1)) - 1
@@ -1637,7 +1733,7 @@ class PlayList:
             song_index = song_start_index + idx - label_idx_start
             last_visible_label = label_entry
             if song_index < len_playlist:
-                playlist_entry = playlist[song_index]
+                playlist_entry = player.playlist[song_index]
                 playlist_to_label_entry(playlist_entry, label_entry)
                 label_entry['visible'] = 1
                 last_visible_label_idx = idx
@@ -1696,10 +1792,10 @@ class PlayList:
     def page_change(self, down):
         if play_control_buttons.playing:  # playing song is at top always, don't touch it
             # page change on portion under top (playing) song
-            len_playlist = len(playlist) - self.topsong_index - 1 # access only below the playing song not above
+            len_playlist = len(player.playlist) - self.topsong_index - 1 # access only below the playing song not above
             n_pages = math.ceil((len_playlist) / (self.songs_per_page - 1))
         else:
-            len_playlist = len(playlist)
+            len_playlist = len(player.playlist)
             n_pages = math.ceil((len_playlist) / self.songs_per_page)
 
         if down > 0:
@@ -1748,7 +1844,7 @@ class PlayList:
 
 
     def add_to_playlist(self, playlist_entry):
-        playlist.append(playlist_entry)
+        player.playlist.append(playlist_entry)
         self.update_visible_list(1, 1)
 #### End class PlayList
 
@@ -1856,54 +1952,25 @@ class ControlButtonPanel:
 
         return(hit_button_index_plus_one)
 
-    def play_media(self, play_item):
-        global player
-
-        play_progress_bar.start_timer(play_item)
-
-        if play_item['filepath'][0:7] == 'spotify':  # pass this on to the spotify app
-            print(f'Spotify tune {play_item["filepath"]}')
-            spotify_client.play(play_item['filepath'])
-            spotify_client.set_stop_time(play_item['duration_s'])  # we need to check, it won't stop by itself
-            play_control_buttons.is_spotify_track = 1
-            if config['scraping_enable'] == 'on':
-                audacity_client.stop()  # if song got skipped, audacity is still recording
-                audacity_client.clearTrack()
-                audacity_client.record()
-        else:
-            # If there's an old player, delete it
-            # if player is not None:
-            #     player.delete()
-            #     time.sleep(2)
-            # # Create a brand new player
-            # player = pyglet.media.Player()
-            #
-            # # Attach event handlers to the new player
-            # @player.event
-            # def on_eos():
-            #     global eos_time, eos_flag
-            #     print('play_media handler on_eos() ----')
-            #     # Handle end of current source (if you want to loop within the same file, etc.)
-            #     # For single-file playback, you might just ignore or restart.
-            #     # Since we'll rely on on_player_eos, we can pass.
-            #     eos_flag = 1
-            #     eos_time = time.time()
-            #
-            # @player.event
-            # def on_player_eos():
-            #     global eos_time, eos_flag
-            #     print('play_media handler on_player_eos() ----')
-            #     # Queue the next file
-            #     # next_file = music_files[times_played % 2]
-            #     # print(f'Queuing next: {next_file}')
-            #     # play_media(next_file)
-            #     eos_flag = 1
-            #     eos_time = time.time()
-
-            music = get_media(play_item)
-            player.queue(music)
-            player.play()
-            play_control_buttons.is_spotify_track = 0
+    # def play_media(self, play_item):
+    #     global player
+    #
+    #     play_progress_bar.start_timer(play_item)
+    #
+    #     if play_item['filepath'][0:7] == 'spotify':  # pass this on to the spotify app
+    #         print(f'Spotify tune {play_item["filepath"]}')
+    #         spotify_client.play(play_item['filepath'])
+    #         spotify_client.set_stop_time(play_item['duration_s'])  # we need to check, it won't stop by itself
+    #         play_control_buttons.is_spotify_track = 1
+    #         if config['scraping_enable'] == 'on':
+    #             audacity_client.stop()  # if song got skipped, audacity is still recording
+    #             audacity_client.clearTrack()
+    #             audacity_client.record()
+    #     else:
+    #         music = get_media(play_item)
+    #         player.queue(music)
+    #         player.play()
+    #         play_control_buttons.is_spotify_track = 0
 #### End class ControlButtonPanel`
 
 class ProgressBar:
@@ -2589,7 +2656,8 @@ def get_media(play_item):
     pyglet.resource.path = [directory_path]
     pyglet.resource.reindex()
     # print("Resource Path:", pyglet.resource.path)
-    music = pyglet.resource.media(music_file_name)
+    #music = pyglet.resource.media(music_file_name)
+    music = vlc.Media(music_file)
     print(music)
     return(music)
 
@@ -2787,27 +2855,6 @@ def export_track(playlist_item):
             file.write(album_cover_image)
 
 
-def player_status(player):
-    print('player_status() --')
-    # Check if player is currently playing
-    is_playing = player.playing  # Returns True/False
-
-    # # Check if player is paused
-    # is_paused = player.paused  # Returns True/False
-
-    # Check if player has a source loaded
-    has_source = player.source is not None
-
-    # Get current playback time (in seconds)
-    current_time = player.time
-
-    # Get source duration (if loaded)
-    if player.source:
-        duration = player.source.duration
-
-    print(f'is_playing:{is_playing}, has_source:{has_source}, current_time:{current_time}')
-
-
 # ============================================ Main ========================================
 
 
@@ -2887,9 +2934,9 @@ tracks_panel = LabelPanel(labels_font_stack)
 singles_panel = LabelPanel(labels_font_stack)
 spotify_panel = LabelPanel(labels_font_stack)
 albums_panel = AlbumPanel(labels_font_stack)
-ze_playlist = PlayList(playlist, labels_font_stack)
+
 artist_list = ArtistsPanel(labels_font_stack)
-play_progress_bar = ProgressBar(playlist_panel_edge_left, playing_highlight_y-15, playlist_panel_label_width)
+# play_progress_bar = ProgressBar(playlist_panel_edge_left, playing_highlight_y-15, playlist_panel_label_width)
 #play_control_buttons = ControlButtonPanel(play_control_buttons_x, play_control_buttons_y, button_list=['play', 'skip', 'shuffle'], button_set=0)
 play_control_buttons = ControlButtonPanel(play_control_buttons_x, play_control_buttons_y, button_list=['play', 'skip'], button_set=0)
 songs_page_buttons = ControlButtonPanel(songs_page_control_buttons_x, songs_page_control_buttons_y, button_list=['up', 'down', 'all'], button_set=1)
@@ -2898,84 +2945,15 @@ playlist_page_buttons = ControlButtonPanel(play_control_buttons_x, play_control_
 
 #window = pyglet.window.Window(width=screen_width, height=screen_height, fullscreen=True)
 # pyglet.options['audio'] = ('pulse', ) # trying something different than openal, since we're getting problems
-#import pyglet.media
-player = pyglet.media.Player()
-audio_driver = pyglet.media.get_audio_driver()
-print(f'Pyglet.options(audio) = {pyglet.options["audio"]}, driver = {audio_driver}')
 
-
-@player.event
-def on_eos(): # end of one song, when all of playlist was queued (TO BE DEPRECATED with spotify option,
-    # because we need to check if the current song needs to be played by the spotify player)
-    print('on_eos() ----')
-    global eos_flag, eos_time, player
-    player_status(player)
-    eos_flag = 1
-    eos_time = time.time()
-
-    # if player.playing:
-    #     player.pause()
-    #     player.seek(0)
-    #     time.sleep(0.1)
-    #     # Sometimes player.next_source() at last song hangs instead of generating on_player_eos event
-    #     # so, delete it and respawn it to prevent this from happening
-    #     # player.delete()
-    #     # player = pyglet.media.Player()
-    #     print('on_eos() - made it to the try statement')
-    #     try:
-    #         player.next_source()
-    #     except:
-    #         print("on_eos() player.next_source() generated error")
-    #         pass
-        #player.seek(0)
-    # BUG ALERT: sometimes we get on_eos() but not on_player_eos(). Gets stuck in a weird unreachable state.
-    # ze_playlist.scroll_down_one(play_control_buttons)
-    # ze_playlist.update_visible_list()
-
-@player.event
-def on_player_eos(): # end of all songs
-    global eos_flag, eos_time
-    print('on_player_eos() ----')
-    player_status(player)
-    eos_flag = 1
-    eos_time = time.time()
-
-
-    # if ze_playlist.scroll_down_one(play_control_buttons) > 0:
-    #     play_control_buttons.buttons[0]['flag'] = 0
-    #     play_control_buttons.playing = 0
-    # else: # cue up next song
-    #     # Clean up current source
-    #     #if player.source:
-    #     if player.playing:
-    #         player.pause()
-    #     time.sleep(0.1)
-    #     while player.source:
-    #         player.next_source()
-    #     time.sleep(0.1)
-    #     if player.playing:
-    #         player.pause()
-    #     # frickin' make a new one
-    #     # player.delete()
-    #     # player = pyglet.media.Player
-    #     time.sleep(0.1) # attempt to resolve a race condition that results in "interrupted by signal 11:SIGSEGV" error
-    #     play_item = playlist[ze_playlist.topsong_index]  # This works as long as click to add is the only possible action
-    #     print(f'on_player_eos() queuing up: {playlist[ze_playlist.topsong_index]["filepath"]}')
-    #     # music = get_media(play_item)
-    #     # player.queue(music)
-    #     play_control_buttons.play_media(play_item)
-    #     time.sleep(0.1)
-    #     # if not(player.playing):
-    #     #     player.play()
-    #     #     time.sleep(0.1)
-    # ze_playlist.update_visible_list()
-
-    #window.dispatch_event('on_draw') # no need
+player = MediaPlayer(config)
+ze_playlist = PlayList(player.playlist, labels_font_stack)
 
 @window.event
 def on_mouse_press(x, y, button, modifiers):
-    global playlist
-    global eos_flag, eos_time, player
+    #global playlist
+    #global eos_flag, eos_time, player
+    global player
 
     pause_start = time.time() # init this var
     print(f"mouse press at {x}, {y}")
@@ -3123,14 +3101,15 @@ def on_mouse_press(x, y, button, modifiers):
         if playlist_page_button_click == 3: # clear/stop pressed
             if play_control_buttons.playing: # stop, don't clear
                 play_control_buttons.playing = 0
-                while not (player.source == None): # flush queue
-                    player.next_source()
+                player.flush_queue()
+                # while not (player.source == None): # flush queue
+                #     player.next_source()
                 playlist_page_buttons.buttons[2]['active'] = 1  # flip to 'clear' again
                 play_control_buttons.buttons[0]['active'] = 1  # turn 'pause' button into 'play' button
                 if play_control_buttons.is_spotify_track > 0:
-                    spotify_client.play_pause()
+                    player.spotify_client.play_pause()
             else: # clear playlist
-                playlist = []
+                player.playlist = []
                 player.pause()
                 #player.queue = []
                 # flush the queue
@@ -3152,25 +3131,25 @@ def on_mouse_press(x, y, button, modifiers):
             # print(f'skip flag = {skip_button_flag}')
             # print(f'shuffle flag = {skip_button_flag}')
             if button_index == 0: # play / pause
-                if (not (play_control_buttons.playing)) and len(playlist) > 0: # start Play
+                if (not (play_control_buttons.playing)) and len(player.playlist) > 0: # start Play
                     play_control_buttons.playing = 1
                     play_control_buttons.buttons[0]['active'] = 0 # turn 'play' button into 'pause' button
                     play_control_buttons.buttons[0]['juiced'] = 1
                     play_control_buttons.buttons[0]['juice_start_time'] = time.time()
                     playlist_page_buttons.buttons[2]['active'] = 0  # Turn 'clear' into "stop" button
-                    play_item = playlist[0]
+                    play_item = player.playlist[0]
                     print(play_item)
                     #play_progress_bar.start_timer(play_item)
-                    play_control_buttons.play_media(play_item)
+                    player.play_media(play_item)
                     ze_playlist.topsong_index = 0
                     ze_playlist.page_index = 0
                     ze_playlist.update_visible_list(0,0)
                 else:
                     if not play_control_buttons.paused: # playing, so pause
                         play_control_buttons.paused = 1
-                        play_progress_bar.pause()
+                        player.play_progress_bar.pause()
                         if play_control_buttons.is_spotify_track:
-                            spotify_client.play_pause()
+                            player.spotify_client.play_pause()
                         else:
                             player.pause()
                         #control_buttons.buttons[0]['flag'] = 0
@@ -3179,13 +3158,10 @@ def on_mouse_press(x, y, button, modifiers):
                     else: # paused, so depause
                         print('Play')
                         play_control_buttons.paused = 0
-                        play_progress_bar.depause()
+                        player.play_progress_bar.depause()
                         play_control_buttons.buttons[0]['active'] = 0
                         if play_control_buttons.is_spotify_track:
-                            spotify_client.play_pause()
-                            # pause_end = time.time()
-                            # delta = pause_end - pause_start
-                            # spotify_client.stop_time += delta
+                            player.spotify_client.play_pause()
                         else:
                             player.play()
                         #control_buttons.buttons[0]['flag'] = 1
@@ -3195,51 +3171,59 @@ def on_mouse_press(x, y, button, modifiers):
                 if play_control_buttons.playing: # skip
                     if play_control_buttons.is_spotify_track > 0:
                         # need to pause current track because if it's not a spotify track next, it will play in parallel with the local track
-                        spotify_client.play_pause()
+                        player.spotify_client.play_pause()
                         if ze_playlist.scroll_down_one(play_control_buttons) < 1: # not last
-                            play_item = playlist[ze_playlist.topsong_index]
-                            play_control_buttons.play_media(play_item)
+                            play_item = player.playlist[ze_playlist.topsong_index]
+                            player.play_media(play_item)
                         else: # Player finished playing, Turn 'stop' button back into 'clear'
                             playlist_page_buttons.buttons[2]['active'] = 1
                         ze_playlist.update_visible_list(0,0)
                     else:
-                        if player.playing:
-
-                            player.pause()
-                            time.sleep(0.05)
-                            player_status(player)
-                            # eos_flag = 1
-                            # eos_time = time.time()
-
-                            player.seek(0)
-                            time.sleep(0.05)
-                            player.next_source() # should generate eos
+                        if player.is_playing():
+                            if ze_playlist.scroll_down_one(play_control_buttons) > 0:
+                                play_control_buttons.buttons[0]['flag'] = 0
+                                play_control_buttons.playing = 0
+                            else:  # cue up next song
+                                play_item = player.playlist[ze_playlist.topsong_index]
+                                print(f'on_draw() queuing up: {play_item["filepath"]}')
+                                player.play_media(play_item)
+                            ze_playlist.update_visible_list(0, 0)
+                            #
+                            # player.pause()
+                            # time.sleep(0.05)
+                            # player.status()
+                            # # eos_flag = 1
+                            # # eos_time = time.time()
+                            #
+                            # player.seek(0)
+                            # time.sleep(0.05)
+                            # player.flush_queue() # should generate eos
                         # time.sleep(0.1)
 
-            elif button_index == 2: # shuffle
-                playlist = shuffle_playlist(playlist, ze_playlist.topsong_index, play_control_buttons.playing)
-                print(f'play_control_buttons.playing={play_control_buttons.playing}')
-                if play_control_buttons.playing: # need to reset the queue now
-                    #requeue(player, playlist, ze_playlist.topsong_index)
-                    n_songs = len(playlist)
-                    print(f'requeue playlist={playlist}')
-                    if ze_playlist.topsong_index < n_songs - 1:  # no need to do anything if the last item is playing
-                        current_source = player.source
-                        current_song_time = player.time
-                        #player.stop()
-                        #player.queue = None  # purge queue
-                        for idx in range(ze_playlist.topsong_index, n_songs):
-                            player.next_source()
-                        player.queue(current_source)
-                        player.play()
-                        play_control_buttons.playing = 1 # eos was triggered when we emptied the queue, and reset this
-                        player.seek(current_song_time)
-                        for idx in range(ze_playlist.topsong_index + 1, n_songs):
-                            music = get_media(playlist[idx])
-                            player.queue(music)
-                #ze_playlist.topsong_index = 0
-                ze_playlist.update_visible_list(0,0)
-                play_control_buttons.buttons[2]['flag'] = 0
+            # elif button_index == 2: # shuffle
+            #     playlist = shuffle_playlist(playlist, ze_playlist.topsong_index, play_control_buttons.playing)
+            #     print(f'play_control_buttons.playing={play_control_buttons.playing}')
+            #     if play_control_buttons.playing: # need to reset the queue now
+            #         #requeue(player, playlist, ze_playlist.topsong_index)
+            #         n_songs = len(playlist)
+            #         print(f'requeue playlist={playlist}')
+            #         if ze_playlist.topsong_index < n_songs - 1:  # no need to do anything if the last item is playing
+            #             current_source = player.source
+            #             current_song_time = player.time
+            #             #player.stop()
+            #             #player.queue = None  # purge queue
+            #             for idx in range(ze_playlist.topsong_index, n_songs):
+            #                 player.next_source()
+            #             player.queue(current_source)
+            #             player.play()
+            #             play_control_buttons.playing = 1 # eos was triggered when we emptied the queue, and reset this
+            #             player.seek(current_song_time)
+            #             for idx in range(ze_playlist.topsong_index + 1, n_songs):
+            #                 music = get_media(playlist[idx])
+            #                 player.queue(music)
+            #     #ze_playlist.topsong_index = 0
+            #     ze_playlist.update_visible_list(0,0)
+            #     play_control_buttons.buttons[2]['flag'] = 0
     elif songs_page_control_button_click:
         button_index = songs_page_control_button_click - 1
         print(f'song page button {button_index} clicked')
@@ -3275,7 +3259,8 @@ def on_mouse_press(x, y, button, modifiers):
 
 @window.event
 def on_draw():
-    global eos_flag, eos_time
+    #global eos_flag, eos_time
+    global player
     window.clear()
     tab_buttons.draw_buttons()
     if tab_buttons.visible_panel == 'Tracks':
@@ -3293,50 +3278,50 @@ def on_draw():
     playlist_page_buttons.draw_buttons()
     if play_control_buttons.playing:
         label_highlight.blit(playing_highlight_x, playing_highlight_y)
-        play_progress_bar.update_timer()
-        play_progress_bar.draw()
-        # check if a spotify track has ended
-        if play_control_buttons.is_spotify_track > 0:
-            if spotify_client.is_track_done():
-                spotify_client.play_pause() # pause
+        player.play_progress_bar.update_timer()
+        player.play_progress_bar.draw()
+        if player.is_track_done():
+            if player.is_spotify_track > 0:
+                player.spotify_client.play_pause() # pause
                 if config['scraping_enable'] == 'on':
-                    export_track(playlist[ze_playlist.topsong_index])
-                if ze_playlist.scroll_down_one(play_control_buttons) > 0:
-                    play_control_buttons.buttons[0]['flag'] = 0
-                    play_control_buttons.playing = 0
-                else:  # cue up next song
-                    play_item = playlist[ze_playlist.topsong_index]  # This works as long as click to add is the only possible action
-                    print(f'on_draw() queuing up: {playlist[ze_playlist.topsong_index]["filepath"]}')
-                    play_control_buttons.play_media(play_item)
-                ze_playlist.update_visible_list(0,0)
+                    export_track(player.playlist[ze_playlist.topsong_index])
+            if ze_playlist.scroll_down_one(play_control_buttons) > 0:
+                play_control_buttons.buttons[0]['flag'] = 0
+                play_control_buttons.playing = 0
+            else:  # cue up next song
+                play_item = player.playlist[ze_playlist.topsong_index]
+                print(f'on_draw() queuing up: {play_item["filepath"]}')
+                player.play_media(play_item)
+            ze_playlist.update_visible_list(0,0)
     ze_playlist.draw_labels()
     artist_list.draw_labels()
 
-    if eos_flag:
-        print(f'on_draw() eos_flag = {eos_flag}, eos_time = {eos_time}, now = {time.time()}')
-
-    if eos_flag and (time.time() - eos_time) > HANDLE_EOS_DELAY:
-        print('on_draw() eos handling ---')
-        eos_flag = 0
-        if play_control_buttons.playing:
-            if ze_playlist.scroll_down_one(play_control_buttons) > 0:
-                #play_control_buttons.buttons[0]['flag'] = 0
-                play_control_buttons.playing = 0
-                play_control_buttons.buttons[0]['active'] = 1 # 'play'
-                playlist_page_buttons.buttons[2]['active'] = 1 # 'clear'
-            else:  # cue up next song
-                # Clean up current source
-                if player.playing:
-                    player.pause()
-                time.sleep(0.1)
-                while player.source:
-                    player.next_source() # flush
-                time.sleep(0.1)  # attempt to resolve a race condition that results in "interrupted by signal 11:SIGSEGV" error
-                play_item = playlist[ze_playlist.topsong_index]
-                print(f'on_draw() eos queuing up: {playlist[ze_playlist.topsong_index]["filepath"]}')
-                play_control_buttons.play_media(play_item)
-                # time.sleep(0.1) # ???
-            ze_playlist.update_visible_list(0,0)
+    # if player.eos_flag:
+    #     print(f'on_draw() eos_flag = {player.eos_flag}, eos_time = {eos_time}, now = {time.time()}')
+    #
+    # if player.eos_flag and (time.time() - player.eos_time) > HANDLE_EOS_DELAY:
+    #     print('on_draw() eos handling ---')
+    #     player.eos_flag = 0
+    #     if play_control_buttons.playing:
+    #         if ze_playlist.scroll_down_one(play_control_buttons) > 0:
+    #             #play_control_buttons.buttons[0]['flag'] = 0
+    #             play_control_buttons.playing = 0
+    #             play_control_buttons.buttons[0]['active'] = 1 # 'play'
+    #             playlist_page_buttons.buttons[2]['active'] = 1 # 'clear'
+    #         else:  # cue up next song
+    #             # Clean up current source
+    #             if player.playing:
+    #                 player.pause()
+    #             time.sleep(0.1)
+    #             while player.source:
+    #                 player.next_source() # flush
+    #             time.sleep(0.1)  # attempt to resolve a race condition that results in "interrupted by signal 11:SIGSEGV" error
+    #             play_item = playlist[ze_playlist.topsong_index]
+    #             print(f'on_draw() eos queuing up: {playlist[ze_playlist.topsong_index]["filepath"]}')
+    #             #play_control_buttons.play_media(play_item)
+    #             player.play_media(play_item)
+    #             # time.sleep(0.1) # ???
+    #         ze_playlist.update_visible_list(0,0)
 
 
 pyglet.app.run()
