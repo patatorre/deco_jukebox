@@ -4,14 +4,16 @@ This is a Python jukebox designed for a touch-screen interface. Just point it to
 
 Quick start:
 1) Install python (3.12 is current as of this writing) and the packages listed in requirements.txt
-2) Edit the jukebox.cfg file.
-2a) change the "music_root_folder=" entry so it points to your music library.
-2b) have a look at the "genres_list=" entry. Change it to something that makes sense to you.
-3) Run it from the command line: "python3 jukebox.py"
+2) Install VLC. On Ubuntu do NOT use the snap install. Just "sudo apt install vlc". on Windows go to the official site: https://www.videolan.org/vlc/.
+3) Clone this repo, unzip it if it's zipped.
+4) In the repo files, edit the jukebox.cfg file.
+    4a) change the "music_root_folder=" entry so it points to your music library.
+    4b) have a look at the "genres_list=" entry. Change it to something that makes sense to you. Start with only a few genres.
+5) Run it from the command line: "python3 jukebox.py"
 
 Your music library:
 If it's not an iTunes library, it should be organized like one. Directory structure should be my_music/some_artist/some_album/some_songs.mp3. mp3's and m4a's will work. m4p's will be ignored. The music is sorted from the music files metadata. The metadata can be a bit wonky, and that will cause trouble or confusion in navigating. For instance, Daft Punk could be tagged as 'french disco', which is a problem if you're expecting it to show up in 'electronica'.
-To palliate this kind a problem, Deco Jukebox offers some features: custom genres, and genre assignments. Have a look at the "user_classifications" folder contents and the 'readme' in there. The second method consists in brute-forcing the metadata. A crude tool for this is "hard_remap_genres.py",
+To palliate this kind of problem, Deco Jukebox offers some features: custom genres, and genre assignments. Have a look at the "user_classifications" folder contents and the 'readme' in there. The second method consists in brute-forcing the metadata. A crude tool for this is "hard_remap_genres.py",
 which is included in the project. One has to change the target directory path and de-comment the lines that change things and save the changes. I suggest using this on an album-to-album or artist-to-artist basis. Just don't put your library as the top path. You would regret tagging everything as 'Pennsylvania polka'.
 
 Genres:
@@ -23,10 +25,10 @@ You have to provide the cover art somehow. I am currently working on a scraper o
 Font:
 The font that gives this jukebox its art-deco look is called 'Lavoir' and can be found here:
 https://fontlibrary.org/en/font/lavoir
-If this font is not installed (on Ubuntu this means at root level), then the jukebox should default to one of the obvious fonts. But it won't look as cool.
+If this font is not installed (on Linux this means at root level), then the jukebox should default to one of the obvious fonts. But it won't look as cool.
 
 Windows / Linux:
-It should work in both. I have less data about stability in Windows.
+Windows and Linux paths are a little different,
 
 Known issues:
 Sometimes, on some hardware, the Pyglet player will generate an on_eos() event as expected but will crash while flushing the queue and not make it to generate an on_player_eos(). I am currently considering using another player library such as python-vlc. This appears to be more likely if mp3s are involved (as in: seems more stable if only m4a's are played).On my HP Touchsmart 310 PC running Ubuntu 24.04, this seems to happen after a few dozen songs are played.

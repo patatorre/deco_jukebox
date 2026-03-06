@@ -13,6 +13,7 @@ import threading
 #from urllib.parse import urlparse, parse_qs
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
+import discogs_helper
 
 # Python_jukebox app, see the developer dashboard
 # https://developer.spotify.com/dashboard
@@ -270,22 +271,35 @@ def get_album_art(album_id):
     #     print("Failed to download album cover.")
 
 
+# GENRE SEARCH IN SPOTIFY IS USELESS, ALMOST ALWAYS DOES NOT RETURN ANY, USE DISCOGS INSTEAD
 def fetch_artist_genre(access_token, artist_ids):
     """
     Get genres for multiple artists at once (max 50 IDs)
     """
-    url = "https://api.spotify.com/v1/artists"
+    url = "https://api.spotify.com/v1/artists/5dHfLBNU8zoypgKefzEB1c"
 
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
 
+    # collapse artist id list
+    artist_ids_collapsed = []
+    for artist_id in artist_ids:
+        if artist_id not in artist_ids_collapsed:
+            artist_ids_collapsed.append(artist_id)
+
+    # artist_ids_collapsed  = [artist_ids[0]]
+
     params = {
-        "ids": ",".join(artist_ids[:50])  # Spotify allows max 50 IDs per call
+        "ids": ",".join(artist_ids_collapsed[:50])  # Spotify allows max 50 IDs per call
     }
 
+    print('fetch_artist_genre() ---')
+    print(params)
     response = requests.get(url, headers=headers, params=params)
-
+    # response = requests.get(url, headers=headers)
+    print('response ---')
+    print(response.json())
     if response.status_code == 200:
         artists_data = response.json()
         genres_dict = {}
@@ -293,7 +307,7 @@ def fetch_artist_genre(access_token, artist_ids):
         for artist in artists_data.get('artists', []):
             if artist:  # Check if artist exists
                 genres = artist.get('genres', [])
-                #print(genres)
+                #print(artist,  genres)
                 if len(genres) > 0:
                     first_genre = genres[0]
                 else:
@@ -338,8 +352,10 @@ def spotify_get_playlist(access_token, playlist_id):
         return []
 
 
-    artist_ids = []
-    # Print all track names and artists; collate artist id list
+    # artist_ids = []
+    album_list = []
+    # Print all track names and artists; collate artist/album pairs
+    unique_albums = set()  # or list
     print("Tracks in playlist:")
     for i, item in enumerate(tracks['items'], 1):
         track = item['track']
@@ -348,16 +364,30 @@ def spotify_get_playlist(access_token, playlist_id):
         artists = track['artists']
         #print(artists)
         first_artist = artists[0]['name']
-        first_artist_id = artists[0]['id']
-        artist_ids.append(first_artist_id)
+        album_name = track['album']['name']
+        # Add to set of unique albums (using tuple)
+        unique_albums.add((first_artist, album_name))
+        # first_artist_id = artists[0]['id']
+        # artist_ids.append(first_artist_id)
 
-    artist_genres_dict = fetch_artist_genre(access_token, artist_ids)
+    # USELESS - RETURNS NOTHING USEFUL
+    # artist_genres_dict = fetch_artist_genre(access_token, artist_ids)
+    # print('-- Artist genres dict --')
+    # print(artist_genres_dict)
+
+    album_metadata = {}  # key: (artist, album), value: {'genres': [...], 'year': ...}
+    for artist, album in unique_albums:
+        album_genre, album_year = discogs_helper.get_album_genre_and_year(artist, album)
+        album_metadata[(artist, album)] = {
+            'genre': album_genre,
+            'year': album_year
+        }
 
     tracks_list = []
     # massage a bit and fetch the genres from (first) artist name
     idx = 0
     for item in tracks['items']:
-        print(item)
+        #print(item)
         track = item['track']
         this_album = track['album']['name']
         #print(this_album)
@@ -365,17 +395,31 @@ def spotify_get_playlist(access_token, playlist_id):
         this_title = track['name']
         uri =  track['uri']
         duration_s = track['duration_ms'] / 1000
-        this_year = track['album']['release_date']
+        #this_year = track['album']['release_date']
         artists = track['artists']
         this_artist = artists[0]['name']
-        this_artist_id = artist_ids[idx]
-        this_genre = artist_genres_dict[this_artist_id]
+        # this_artist_id = artist_ids[idx]
+        # try: # if the user managed to cram more than 50 unique artists in the paylist, there will be some missing from the dict
+        #      # but since spotify is pretty useless for genres, putting 'unknown' is pretty much the same
+        #      # need to post-process with discogs (to-do)
+        #     this_genre = artist_genres_dict[this_artist_id]
+        # except:
+        #     this_genre = 'unknown'
+        #this_genre = 'unknown'
+        key = (this_artist, this_album)
+        metadata = album_metadata.get(key, {'genres': [], 'year': None})
+
+        # Now you can use metadata['genres'], metadata['year'] in your output
+        this_genre = metadata['genre']
+        this_year = metadata['year']
+
         playlist_entry = {'album': this_album, 'artist': this_artist, 'title': this_title, 'filepath': uri,
                           'duration_s': duration_s,
                           'genre': this_genre, 'year': this_year, 'album_id': album_id, 'list_index':0}
 
         tracks_list.append(playlist_entry)
         idx += 1
+        print(f"{idx}. {uri}:{this_title} - {this_artist} (genre: {this_genre})")
 
     return tracks_list
 

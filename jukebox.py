@@ -158,11 +158,13 @@ if config['spotify_enable'] == 'on':
     spotify_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
     spotify_playlist_id = os.getenv('SPOTIFY_PLAYLIST_ID')
     if spotify_id == None:
-        print('*** WARNING *** SPOTIFY_CLIENT_ID environmental variable not set.')
+        print('*** WARNING *** SPOTIFY_CLIENT_ID environmental variable not set. Spotify disabled.')
+        config['spotify_enable'] == 'off'
     if spotify_secret == None:
-        print('*** WARNING *** SPOTIFY_CLIENT_SECRET environmental variable not set.')
+        print('*** WARNING *** SPOTIFY_CLIENT_SECRET environmental variable not set. Spotify disabled.')
+        config['spotify_enable'] == 'off'
     if spotify_playlist_id == None:
-        print('*** WARNING *** SPOTIFY_PLAYLIST_ID environmental variable not set.')
+        print('*** NOTE *** SPOTIFY_PLAYLIST_ID environmental variable not set.')
 
 buttons_font_size = 20
 buttons_font_size_smaller = 14
@@ -239,6 +241,8 @@ tracks_button_on_file = os.path.join(buttons_folder, "tracks_button_on.png")
 tracks_button_off_file = os.path.join(buttons_folder, "tracks_button_off.png")
 albums_button_on_file = os.path.join(buttons_folder, "albums_button_on.png")
 albums_button_off_file = os.path.join(buttons_folder, "albums_button_off.png")
+spotify_button_on_file = os.path.join(buttons_folder, "spotify_button_on.png")
+spotify_button_off_file = os.path.join(buttons_folder, "spotify_button_off.png")
 back_button_lit_file = os.path.join(buttons_folder, "back_button_160x80.png")
 back_button_unlit_file = os.path.join(buttons_folder, "back_button_unlit_160x80.png")
 default_cover_image_file = os.path.join(album_art_folder, "default_cover_100x100.png")
@@ -291,7 +295,7 @@ class MediaPlayer:
         self.eos_time = None
         self.is_spotify_track = 0
         self.playlist = []
-        self.playing = 0
+        self.playing = 0  # 1 if actually playing, 0 if paused or stopped.
         self.stop_time = time.time()
         self.pause_start = time.time()
 
@@ -299,11 +303,7 @@ class MediaPlayer:
             self.spotify_enable = True
             self.spotify_client = spotify_controller.SpotifyDBusController()
             token = spotify_controller.get_user_token()
-            try:
-                playlist_id = config['spotify_playlist_id']
-            except:
-                playlist_id = ''
-            tracks = spotify_controller.spotify_get_playlist(token, playlist_id)
+            tracks = spotify_controller.spotify_get_playlist(token, spotify_playlist_id)
             self.playlist = tracks
 
 
@@ -313,6 +313,8 @@ class MediaPlayer:
 
     def stop(self):
         self.this_player.stop()
+        self.playing = 0
+        self.flush_queue()
 
     def pause(self):
         self.this_player.pause()
@@ -342,6 +344,7 @@ class MediaPlayer:
         self.this_player.set_media(vlc.Media(song_path))
 
     def flush_queue(self):
+        self.this_player.set_media(None)
         pass
 
     def is_playing(self):
@@ -782,7 +785,8 @@ class ButtonPanel:
 
             this_playlist_item = {'album':album, 'artist':artist, 'title':title, 'filepath':filepath, 'duration_s':duration_s,
                                   'genre':genre, 'year':year, 'album_id':album_id, 'dim_flag':dim_flag, 'list_index':1}
-            print(f'Should be {dimmed_tracks} dimmed tracks.')
+            playlist_items.append(this_playlist_item)
+        print(f'Should be {dimmed_tracks} dimmed tracks.')
         return(playlist_items)
 
 #### End class ButtonPanel
@@ -793,8 +797,8 @@ class TopButtons:
     def __init__(self):
         self.tab_buttons = []
         self.tab_list = ['Singles', 'Tracks', 'Albums'] #, 'Playlists', 'Spotify'] # all genres except 'All' and 'Other'
-        tab_files_off = [singles_button_off_file, tracks_button_off_file, albums_button_off_file]
-        tab_files_on = [singles_button_on_file, tracks_button_on_file, albums_button_on_file]
+        tab_files_off = [singles_button_off_file, tracks_button_off_file, albums_button_off_file, spotify_button_off_file]
+        tab_files_on = [singles_button_on_file, tracks_button_on_file, albums_button_on_file, spotify_button_on_file]
         self.tab_images_off = []
         self.tab_images_on = []
         for file_on, file_off in zip(tab_files_on, tab_files_off):
@@ -1056,7 +1060,6 @@ class LabelPanel:
             entry_idx = entry_idx + 1
 
         if (hit_flag > 0):
-            #button['flag'] = not(button['flag'])
             print(f'label x_mid y_mid = {x_mid}, {y_mid}')
             playlist_entry = label_to_playlist_item(clicked_label)
             print(f'adding to playlist: {playlist_entry["filepath"]}')
@@ -1481,9 +1484,9 @@ class ArtistsPanel:
     def update_visible_list(self):
 
         n_filtered = len(self.artists_list)
-        start_index = self.page_number * self.n_labels_vert
+        start_index = self.page_number * (self.n_labels_vert-1)
 
-        range_end = start_index + self.n_labels_vert
+        range_end = start_index + self.n_labels_vert - 2
         if range_end >= n_filtered:
             range_end = n_filtered
         print(f'Artists Page number {self.page_number}')
@@ -1492,7 +1495,7 @@ class ArtistsPanel:
         print(f'visible range {start_index} to {range_end}')
 
         for idx in range(1, self.n_labels_vert): # idx 0 is 'All', always
-            artist_idx = idx + self.n_labels_vert*self.page_number
+            artist_idx = idx + (self.n_labels_vert-1)*self.page_number
             if (artist_idx < len(self.artists_list)):
                 this_artist = self.artists_list[artist_idx]
                 self.visible_list[idx]['visible'] = 1
@@ -1554,7 +1557,7 @@ class ArtistsPanel:
                 self.page_number = self.page_number - 1
                 change_flag = 1
         else: # should be page down
-            n_pages = math.ceil(n_artists / self.n_labels_vert)
+            n_pages = math.ceil(n_artists / (self.n_labels_vert - 1))
             if self.page_number < n_pages - 1:
                 self.page_number = self.page_number + 1
                 change_flag = 1
@@ -1712,7 +1715,7 @@ class PlayList:
         if self.topsong_index >= len(player.playlist):
             print("Queue is empty")
             this_control_buttons.playing = 0
-            this_control_buttons.buttons[0]['flag'] = 0
+            this_control_buttons.buttons[0]['active'] = 0
             self.topsong_index = 0
             last_one = 1
         else:
@@ -1854,7 +1857,6 @@ class PlayList:
 
         if (hit_flag > 0):
             # we're already in the playlist, not sure what a click will do yet
-            #button['flag'] = not(button['flag'])
             print(f'label x_mid y_mid = {x_mid}, {y_mid}')
             filepath = label_entry['filepath']
             #print(f'added {filepath}')
@@ -1890,8 +1892,8 @@ class ControlButtonPanel:
 
     def __init__(self, x, y, button_list, button_set):
         self.buttons = []
-        self.playing = 0
-        self.paused = 0
+        self.playing = 0  # this is 1 if playlist is being played. it is still 1 if play is paused.
+        self.paused = 0 # and this is how we keep track of pausing. maybe should fold this into player class.
         self.is_spotify_track = 0 # current track is being played on spotify client
         self.button_width = self.button_widths[button_set]
         self.button_height = self.button_heights[button_set]
@@ -1950,7 +1952,6 @@ class ControlButtonPanel:
             button_x = button['x']
             button_y = button['y']
             #print(f'bx:{button_x}, by:{button_y}')
-            #flag = button['flag']
             yes_x = 0
             yes_y = 0
             if (click_x - button_x) < button['width'] and (click_x >= button_x):
@@ -1967,8 +1968,6 @@ class ControlButtonPanel:
             button_idx = button_idx + 1
 
         if (hit_flag > 0):
-            #button_new_state = button['flag']
-            #print(f'Hit control button index {button_idx}, state = {button_new_state}')
             print(f'Hit control button index {button_idx}')
             hit_button_index_plus_one = button_idx + 1
 
@@ -3036,7 +3035,6 @@ def on_mouse_press(x, y, button, modifiers):
             singles_panel.update_visible_list()
             singles_panel.update_double_filtered_list(artist_list)
         elif tab_buttons.visible_panel == 'Spotify':
-            # Query a page's worth of songs so we can show them
             artist_list.update_artists_list(spotify_panel.filtered_list)
             spotify_panel.page_number = 0
             spotify_panel.update_visible_list()
@@ -3046,6 +3044,7 @@ def on_mouse_press(x, y, button, modifiers):
         #artist_list.all_selected = 1
         artist_list.artists_selected[0] = 1
         artist_list.update_visible_list()
+
     elif buttons_panel_click: # i.e. selection of genres and epochs has changed
         print('Button panel click')
         albums_panel.album_open = 0 # force closure of open album
@@ -3054,6 +3053,7 @@ def on_mouse_press(x, y, button, modifiers):
         albums_panel.filtered_list = button_panel.update_filtered(albums_list)
         if config['spotify_enable'] == 'on': # don't make web queries if not active option. Other local stuff we don't care about
             spotify_panel.filtered_list = button_panel.get_spotify_page(spotify_panel.songs_per_page, int(config['spotify_start_page_number']))
+            print('Spotify panel filtered list :', spotify_panel.filtered_list)
             if tab_buttons.visible_panel == 'Spotify':
                 artist_list.update_artists_list(spotify_panel.filtered_list)
                 spotify_panel.update_double_filtered_list(artist_list)
@@ -3102,7 +3102,7 @@ def on_mouse_press(x, y, button, modifiers):
     elif artists_control_panel_click:
         print('artists_control_panel_click: yes')
         button_index = artists_control_panel_click - 1
-        artists_page_buttons.buttons[button_index]['flag'] = 1
+        artists_page_buttons.buttons[button_index]['active'] = 1
         artists_page_buttons.draw_buttons() # the "on" should appear brielfy
         if (artist_list.page_change(button_index)):
             artist_list.update_visible_list()
@@ -3116,7 +3116,7 @@ def on_mouse_press(x, y, button, modifiers):
             # albums_panel.update_visible_list()
             # tracks_panel.update_visible_list()
             # spotify_panel.update_visible_list()
-        artists_page_buttons.buttons[button_index]['flag'] = 0
+        artists_page_buttons.buttons[button_index]['active'] = 0
     elif playlist_page_button_click:
         if playlist_page_button_click in [1, 2]:
             ze_playlist.page_change(playlist_page_button_click-1)
@@ -3147,45 +3147,42 @@ def on_mouse_press(x, y, button, modifiers):
 
     elif play_control_button_click:
             button_index = play_control_button_click-1
-            # play_button_flag = play_control_buttons.buttons[0]['flag']
-            # skip_button_flag = play_control_buttons.buttons[1]['flag']
-            #shuffle_button_flag = play_control_buttons.buttons[2]['flag']
-            # print(f'play flag = {play_button_flag}')
-            # print(f'skip flag = {skip_button_flag}')
-            # print(f'shuffle flag = {skip_button_flag}')
+
             if button_index == 0: # play / pause
-                if (not (play_control_buttons.playing)) and len(player.playlist) > 0: # start Play
-                    play_control_buttons.playing = 1
-                    play_control_buttons.buttons[0]['active'] = 0 # turn 'play' button into 'pause' button
-                    play_control_buttons.buttons[0]['juiced'] = 1
-                    play_control_buttons.buttons[0]['juice_start_time'] = time.time()
-                    playlist_page_buttons.buttons[2]['active'] = 0  # Turn 'clear' into "stop" button
-                    play_item = player.playlist[0]
-                    print(play_item)
-                    #play_progress_bar.start_timer(play_item)
-                    player.play_media(play_item)
-                    ze_playlist.topsong_index = 0
-                    ze_playlist.page_index = 0
-                    ze_playlist.update_visible_list(0,0)
-                else:
-                    if not play_control_buttons.paused: # playing, so pause
-                        play_control_buttons.paused = 1
-                        # player.play_progress_bar.pause()
-                        player.play_pause()
-                        #control_buttons.buttons[0]['flag'] = 0
-                        play_control_buttons.buttons[0]['active'] = 1 # switch to 'play' button
-                        print('Pause')
-                    else: # paused, so depause
-                        print('Play')
-                        play_control_buttons.paused = 0
-                        # player.play_progress_bar.depause()
-                        play_control_buttons.buttons[0]['active'] = 0
-                        player.play_pause()
-                        # if play_control_buttons.is_spotify_track:
-                        #     player.spotify_client.play_pause()
-                        # else:
-                        #     player.play()
-                        #control_buttons.buttons[0]['flag'] = 1
+                if len(player.playlist) > 0: # only do stuff if there's a playlist
+                    if not (play_control_buttons.playing): # start Play
+                        print(f'len(player.playlist) = {len(player.playlist)}')
+                        play_control_buttons.playing = 1
+                        play_control_buttons.buttons[0]['active'] = 0 # turn 'play' button into 'pause' button
+                        play_control_buttons.buttons[0]['juiced'] = 1
+                        play_control_buttons.buttons[0]['juice_start_time'] = time.time()
+                        playlist_page_buttons.buttons[2]['active'] = 0  # Turn 'clear' into "stop" button
+                        play_item = player.playlist[0]
+                        print(play_item)
+                        #play_progress_bar.start_timer(play_item)
+                        player.play_media(play_item)
+                        ze_playlist.topsong_index = 0
+                        ze_playlist.page_index = 0
+                        ze_playlist.update_visible_list(0,0)
+                    else:
+                        if not play_control_buttons.paused: # playing, so pause
+                            play_control_buttons.paused = 1
+                            # player.play_progress_bar.pause()
+                            player.play_pause()
+                            #control_buttons.buttons[0]['flag'] = 0
+                            play_control_buttons.buttons[0]['active'] = 1 # switch to 'play' button
+                            print('Pause')
+                        else: # paused, so depause
+                            print('Play')
+                            play_control_buttons.paused = 0
+                            # player.play_progress_bar.depause()
+                            play_control_buttons.buttons[0]['active'] = 0
+                            player.play_pause()
+                            # if play_control_buttons.is_spotify_track:
+                            #     player.spotify_client.play_pause()
+                            # else:
+                            #     player.play()
+                            #control_buttons.buttons[0]['flag'] = 1
 
             elif button_index == 1: # skip
                 print("skip button pressed")
@@ -3202,7 +3199,7 @@ def on_mouse_press(x, y, button, modifiers):
                     else:
                         if player.is_playing():
                             if ze_playlist.scroll_down_one(play_control_buttons) > 0:
-                                play_control_buttons.buttons[0]['flag'] = 0
+                                play_control_buttons.buttons[0]['active'] = 0
                                 play_control_buttons.playing = 0
                             else:  # cue up next song
                                 play_item = player.playlist[ze_playlist.topsong_index]
@@ -3297,7 +3294,7 @@ def on_draw():
                 if config['scraping_enable'] == 'on':
                     export_track(player.playlist[ze_playlist.topsong_index])
             if ze_playlist.scroll_down_one(play_control_buttons) > 0:
-                play_control_buttons.buttons[0]['flag'] = 0
+                play_control_buttons.buttons[0]['active'] = 0
                 play_control_buttons.playing = 0
             else:  # cue up next song
                 play_item = player.playlist[ze_playlist.topsong_index]
