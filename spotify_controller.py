@@ -72,6 +72,7 @@ class SpotifyDBusController:
                 self.playing = 1
                 paused_time = time.time() - self.pause_start
                 self.stop_time += paused_time
+        return(self.playing)
 
     def play(self, spotify_uri):
         """Play a Spotify URI (e.g., spotify:track:123)"""

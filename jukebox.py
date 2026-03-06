@@ -309,26 +309,33 @@ class MediaPlayer:
 
     def play(self):
         self.this_player.play()
+        self.playing = 1
 
     def stop(self):
         self.this_player.stop()
 
     def pause(self):
         self.this_player.pause()
+        self.playing = 0
 
     def play_pause(self):
         if self.is_spotify_track:
-            self.spotify_client.PlayPause()
+            if self.spotify_client.play_pause(): # returns True0 if pause, 1 if depause
+                self.play_progress_bar.depause()
+            else:
+                self.play_progress_bar.pause()
         else:
             if self.is_playing():
                 self.pause()
                 self.playing = 0
                 self.pause_start = time.time()
+                self.play_progress_bar.pause()
             else:
                 self.playing = 1
                 self.play()
                 paused_time = time.time() - self.pause_start
                 self.stop_time += paused_time
+                self.play_progress_bar.depause()
 
     def queue(self, song_path):
         #media = vlc.Media(song_path)
@@ -381,17 +388,18 @@ class MediaPlayer:
         if player.is_spotify_track > 0:
             return(self.spotify_client.is_track_done())
         else: # local
-            now = time.time()
-            if now > self.stop_time:
-                return True
+            if self.playing: # don't check is paused
+                now = time.time()
+                if now > self.stop_time:
+                    return True
+                else:
+                    return False
             else:
                 return False
 
     def set_stop_time(self, duration_s):
         now = time.time()
         self.stop_time = now + duration_s
-
-
 
 
 class JuicedButton:
@@ -3115,7 +3123,7 @@ def on_mouse_press(x, y, button, modifiers):
         if playlist_page_button_click == 3: # clear/stop pressed
             if play_control_buttons.playing: # stop, don't clear
                 play_control_buttons.playing = 0
-                player.pause()
+                player.stop()
                 player.flush_queue()
                 # while not (player.source == None): # flush queue
                 #     player.next_source()
@@ -3162,23 +3170,21 @@ def on_mouse_press(x, y, button, modifiers):
                 else:
                     if not play_control_buttons.paused: # playing, so pause
                         play_control_buttons.paused = 1
-                        player.play_progress_bar.pause()
-                        if play_control_buttons.is_spotify_track:
-                            player.spotify_client.play_pause()
-                        else:
-                            player.pause()
+                        # player.play_progress_bar.pause()
+                        player.play_pause()
                         #control_buttons.buttons[0]['flag'] = 0
                         play_control_buttons.buttons[0]['active'] = 1 # switch to 'play' button
                         print('Pause')
                     else: # paused, so depause
                         print('Play')
                         play_control_buttons.paused = 0
-                        player.play_progress_bar.depause()
+                        # player.play_progress_bar.depause()
                         play_control_buttons.buttons[0]['active'] = 0
-                        if play_control_buttons.is_spotify_track:
-                            player.spotify_client.play_pause()
-                        else:
-                            player.play()
+                        player.play_pause()
+                        # if play_control_buttons.is_spotify_track:
+                        #     player.spotify_client.play_pause()
+                        # else:
+                        #     player.play()
                         #control_buttons.buttons[0]['flag'] = 1
 
             elif button_index == 1: # skip
@@ -3203,17 +3209,7 @@ def on_mouse_press(x, y, button, modifiers):
                                 print(f'on_draw() queuing up: {play_item["filepath"]}')
                                 player.play_media(play_item)
                             ze_playlist.update_visible_list(0, 0)
-                            #
-                            # player.pause()
-                            # time.sleep(0.05)
-                            # player.status()
-                            # # eos_flag = 1
-                            # # eos_time = time.time()
-                            #
-                            # player.seek(0)
-                            # time.sleep(0.05)
-                            # player.flush_queue() # should generate eos
-                        # time.sleep(0.1)
+
 
             # elif button_index == 2: # shuffle
             #     playlist = shuffle_playlist(playlist, ze_playlist.topsong_index, play_control_buttons.playing)
