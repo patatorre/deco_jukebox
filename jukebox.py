@@ -136,7 +136,7 @@ def read_ini():
         with open(config_file_name) as f:
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#'):
+                if line and not (line.startswith('#') or line.startswith(';')):
                     key, value = line.split('=', 1)
                     config[key.strip()] = value.strip()
                     print(f'{key.strip()} = {value.strip()}')
@@ -449,9 +449,9 @@ class ButtonPanel:
 
     def __init__(self, epochs_lit_image, genres_lit_image, unlit_image, config_genres_list, buttons_font_stack):
         print(f'ButtonPanel __init__() config_genres_list = {config_genres_list}')
-        self.epochs_list = ['50s', '60s', '70s', '80s', '90s', '2000s'] # all genres except 'All' and 'Other'
-        if config_genres_list == []:
-            self.genres_list = ['Classical', 'Soundtrack', 'Folk', 'Rock', 'R&B', 'Altechnic', 'Franco', 'Humor', 'Christmas']
+        self.epochs_list = ['60s', '70s', '80s', '90s', '2000s', '2010s', '2020s']
+        if config_genres_list == []: # all genres except 'All' and 'Other'
+            self.genres_list = ['Classical', 'Soundtrack', 'Folk', 'Rock', 'R&B', 'Altechnic', 'Franco', 'Christmas']
         else:
             self.genres_list = config_genres_list
         self.epoch_names = ['All'] + self.epochs_list + ['Other']
