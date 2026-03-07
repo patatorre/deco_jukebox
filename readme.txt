@@ -9,7 +9,7 @@ Quick start:
 4) In the repo files, edit the jukebox.cfg file.
     4a) change the "music_root_folder=" entry so it points to your music library.
     4b) have a look at the "genres_list=" entry. Change it to something that makes sense to you. Start with only a few genres.
-5) Run it from the command line: "python3 jukebox.py"
+5) Run it from the command line: "python3 jukebox.py" or "python.exe jukebox.py"
 
 Your music library:
 If it's not an iTunes library, it should be organized like one. Directory structure should be my_music/some_artist/some_album/some_songs.mp3. mp3's and m4a's will work. m4p's will be ignored. The music is sorted from the music files metadata. The metadata can be a bit wonky, and that will cause trouble or confusion in navigating. For instance, Daft Punk could be tagged as 'french disco', which is a problem if you're expecting it to show up in 'electronica'.

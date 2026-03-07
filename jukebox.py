@@ -20,8 +20,8 @@ import random
 import time
 from unidecode import unidecode
 from mutagen.id3 import ID3TimeStamp
-# import spotify_controller
-# import audacity_controller
+import spotify_controller
+import audacity_controller
 import vlc
 
 
