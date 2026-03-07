@@ -3,7 +3,7 @@
 #
 # A touchscreen jukebox in Python
 # by Patrick Dumais, patatorre "at" proton.me
-# Version 0.6
+# Version 0.7
 # March 2026
 #
 # sudo buy me a coffee:
@@ -2091,7 +2091,7 @@ def list_files_in_nested_folders(root_folder):
         filenames.sort()
         for filename in filenames:
             #print(f"  File: {filename}")
-            filepath = dirpath + "/" + filename
+            filepath = os.path.join(dirpath, filename)
             audiotype = filename[-3:]
             if audiotype in ['m4a', 'm4p', 'mp3']:
                 musics.append(filepath)
