@@ -10,6 +10,7 @@
 # https://buymeacoffee.com/patrickdumais
 #
 # For user customizations of genres etc., have a look at the readme.txt in user_classifications/
+from operator import is_
 
 import pyglet
 from pyglet.gl import *
@@ -62,7 +63,19 @@ else:
     rez_idx = 0
 
 window_width = screen_width
-window_height = screen_height - 30 # not fullscreen, make room for the top bar
+
+
+def is_windows():
+    probably_windows = 0
+    if os.path.exists("C:\\"):
+        probably_windows = 1
+    return(probably_windows)
+
+
+if is_windows():
+    window_height = screen_height
+else:
+    window_height = screen_height - 30 # not fullscreen, make room for the top bar
 
 # print(f"Screen resolution: {screen.width}x{screen.height}")
 # if not (screen.width == 1600) and not (screen.height == 900):
@@ -163,6 +176,7 @@ if config['spotify_enable'] == 'on':
         config['spotify_enable'] == 'off'
     if spotify_playlist_id == None:
         print('*** NOTE *** SPOTIFY_PLAYLIST_ID environmental variable not set.')
+
 
 buttons_font_size = 20
 buttons_font_size_smaller = 14
