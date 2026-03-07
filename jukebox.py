@@ -1163,7 +1163,8 @@ class AlbumPanel:
                                            x=x_album_label, y=y_album_label,
                                            anchor_x='left', anchor_y='bottom')
             this_album_entry = {'album': this_album, 'artist': this_artist, 'x_label': x_album_label, 'y_label': y_album_label,
-                                'label': this_label, 'cover': this_cover_image, 'dir_path': this_dir_path, 'visible':0}
+                                'label': this_label, 'cover': this_cover_image, 'dir_path': this_dir_path, 'visible':0,
+                                'year':'1066', 'genre':''}
             self.visible_albums.append(this_album_entry)
             vert_count = vert_count + 1
             y_album_label = y_album_label - self.album_spacing_vert
@@ -1329,15 +1330,15 @@ class AlbumPanel:
         self.back_button.draw()
 
         for label_entry in self.visible_labels:
-            x_label = label_entry['x_label']
-            y_label = label_entry['y_label']
-            title_labels = label_entry['title_label']
-            artist_label = label_entry['artist_label']
-            album_label = label_entry['album_label']
-            dim_flag = label_entry['dim_flag']
-            label_index = label_entry['list_index'] % len(label_blanks)
-
             if label_entry['visible'] > 0 :
+                x_label = label_entry['x_label']
+                y_label = label_entry['y_label']
+                title_labels = label_entry['title_label']
+                artist_label = label_entry['artist_label']
+                album_label = label_entry['album_label']
+                dim_flag = label_entry['dim_flag']
+                label_index = label_entry['list_index'] % len(label_blanks)
+
                 if dim_flag > 0:
                     labels_dimmed[label_index].blit(x_label, y_label)
                 else:
@@ -1368,14 +1369,15 @@ class AlbumPanel:
         y_mid = 0
         if self.album_open: # Clickable songs
             for label_entry in self.visible_labels:
-                artist_label = label_entry['artist_label']
-                x_mid = artist_label.x
-                y_mid = artist_label.y
-                if (abs(x_mid - click_x) < self.label_width / 2) and (abs(y_mid - click_y) < self.label_height / 2):
-                    clicked_label = label_entry
-                    if clicked_label['visible']:
+                if label_entry['visible'] > 0:
+                    artist_label = label_entry['artist_label']
+                    x_mid = artist_label.x
+                    y_mid = artist_label.y
+                    if (abs(x_mid - click_x) < self.label_width / 2) and (abs(y_mid - click_y) < self.label_height / 2):
+                        clicked_label = label_entry
+                        # if clicked_label['visible']:
                         hit_flag = 1
-                    break
+                        break
                 entry_idx = entry_idx + 1
 
             if (hit_flag > 0):
@@ -1394,12 +1396,13 @@ class AlbumPanel:
         else:
             # Find which album was clicked
             for album_entry in self.visible_albums:
-                x = album_entry['x_label']
-                y = album_entry['y_label']
-                if (click_x > x) and (click_x < (x + self.album_cover_size)) and (click_y > y)  and (click_y < (y + self.album_cover_size + self.album_title_size)):
-                    hit_flag = 1
-                    clicked_album = album_entry
-                    break
+                if album_entry['visible'] > 0:
+                    x = album_entry['x_label']
+                    y = album_entry['y_label']
+                    if (click_x > x) and (click_x < (x + self.album_cover_size)) and (click_y > y)  and (click_y < (y + self.album_cover_size + self.album_title_size)):
+                        hit_flag = 1
+                        clicked_album = album_entry
+                        break
                 entry_idx = entry_idx + 1
 
             if (hit_flag > 0):
