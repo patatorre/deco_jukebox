@@ -30,8 +30,7 @@ If this font is not installed (on Linux this means at root level), then the juke
 Windows / Linux:
 Deco Jukebox works in both. Note Windows and Linux paths use different slashes ("\" vs "/" respectively)
 
-Enjoy!
+If you enjoy this project then consider : [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/patrickdumais)
 
 Patrick Dumais
 patatorre "at" proton.me
-Feb 2026
