@@ -492,8 +492,6 @@ class ButtonPanel:
             else:
                 year = int(epoch)
                 if year > 1999:
-                    years = range(2000, 2050)
-                else:
                     years = range(year, year + 10)
             self.all_years = self.all_years + list(years)
 
@@ -693,8 +691,6 @@ class ButtonPanel:
                     else:
                         year = int(epoch) # should be a four digit year number
                         if year > 1999:
-                            years = range(2000,2050)
-                        else:
                             years = range(year, year+10)
 
                     if song_year in years:
