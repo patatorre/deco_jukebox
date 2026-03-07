@@ -3199,8 +3199,10 @@ def on_mouse_press(x, y, button, modifiers):
                     else:
                         if player.is_playing():
                             if ze_playlist.scroll_down_one(play_control_buttons) > 0:
-                                play_control_buttons.buttons[0]['active'] = 0
+                                player.stop()
+                                play_control_buttons.buttons[0]['active'] = 1
                                 play_control_buttons.playing = 0
+                                playlist_page_buttons.buttons[2]['active'] = 1
                             else:  # cue up next song
                                 play_item = player.playlist[ze_playlist.topsong_index]
                                 print(f'on_draw() queuing up: {play_item["filepath"]}')
@@ -3294,8 +3296,10 @@ def on_draw():
                 if config['scraping_enable'] == 'on':
                     export_track(player.playlist[ze_playlist.topsong_index])
             if ze_playlist.scroll_down_one(play_control_buttons) > 0:
-                play_control_buttons.buttons[0]['active'] = 0
+                play_control_buttons.buttons[0]['active'] = 1
                 play_control_buttons.playing = 0
+                playlist_page_buttons.buttons[2]['active'] = 1
+
             else:  # cue up next song
                 play_item = player.playlist[ze_playlist.topsong_index]
                 print(f'on_draw() queuing up: {play_item["filepath"]}')
