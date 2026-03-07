@@ -20,7 +20,7 @@ Genres:
 The 'genre' buttons are specified in "jukebox.cfg" (the "genres_list" item). I recommend not exceeding nine genres in the list. If you exceed this number, on the 1600x900 resolution you will start losing buttons. All of these genres can be custom genres, all you have to do is create a list of sub-genres and throw it in the user_classifications/genres/ folder. Any song that *matches* the genre or sub-genre therein will show up when that genre button is lit. See the readme in "user_classifications" for more details.
 
 Album covers:
-You have to provide the cover art somehow. I am currently working on a scraper of sorts. The album art live in graphics/album_covers/ and should be .jpg. File names need to match the album title as it is found in the music files metadata for that album. This has not posed a problem for me except for 'Greatest Hits' which is all too common. Solution for that would be to force unique album titles in the metadata. I just let it ride.
+You have to provide the cover art somehow. I am currently working on a scraper to do just that. The album art live in graphics/album_covers/ and should be .jpg. File names need to match the album title as it is found in the music files metadata for that album. This has not posed a problem for me except for 'Greatest Hits' which is all too common. Solution for that would be to force unique album titles in the metadata. I just let it ride.
 
 Font:
 The font that gives this jukebox its art-deco look is called 'Lavoir' and can be found here:
@@ -28,10 +28,7 @@ https://fontlibrary.org/en/font/lavoir
 If this font is not installed (on Linux this means at root level), then the jukebox should default to one of the obvious fonts. But it won't look as cool.
 
 Windows / Linux:
-Windows and Linux paths are a little different,
-
-Known issues:
-Sometimes, on some hardware, the Pyglet player will generate an on_eos() event as expected but will crash while flushing the queue and not make it to generate an on_player_eos(). I am currently considering using another player library such as python-vlc. This appears to be more likely if mp3s are involved (as in: seems more stable if only m4a's are played).On my HP Touchsmart 310 PC running Ubuntu 24.04, this seems to happen after a few dozen songs are played.
+Deco Jukebox works in both. Note Windows and Linux paths use different slashes ("\" vs "/" respectively)
 
 Enjoy!
 
