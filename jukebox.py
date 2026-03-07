@@ -1954,12 +1954,12 @@ class ProgressBar:
         self.end_time = 0
         self.played_time = 0
         self.played_time_label = pyglet.text.Label(dummy_time_str,
-                                           font_name='DINEngsschriftStd',
+                                           font_name=labels_font_stack,
                                            font_size=PROGBAR_TEXT_SIZE,
                                            color=(255, 255, 255, 255),
                                            x=x0, y=y0-text_v_adj,anchor_x='left', anchor_y='bottom')
         self.end_time_label = pyglet.text.Label(dummy_time_str,
-                                           font_name='DINEngsschriftStd',
+                                           font_name=labels_font_stack,
                                            font_size=PROGBAR_TEXT_SIZE,
                                            color=(255, 255, 255, 255),
                                            x=x0 + self.bar_width + text_width, y=y0-text_v_adj,anchor_x='left', anchor_y='bottom')
