@@ -276,7 +276,7 @@ def get_release_id_by_artist_and_album(artist_name, album_name, token):
         # Display matches to help with selection
         print(f"Found {len(results)} potential matches:")
         for i, result in enumerate(results):  # Show first 3
-            print(f"  {i + 1}. {result.get('title')} (Year: {result.get('year', 'N/A')})")
+            print(f"  {i + 1}. {result.get('id')}:{result.get('title')} (Year: {result.get('year', 'N/A')})")
 
         # Select a release that has the earliest release date
         earliest_release_date = 6666
@@ -402,12 +402,13 @@ def discogs_scrape_album_covers(albums_missing_art, album_cover_dir, discogs_tok
     for album_name, artist_name in albums_missing_art:
         if album_name != 'Unknown Album': # if the album title is unknown, then we can't retrieve the art, now can we?
             release_id = get_release_id_by_artist_and_album(artist_name, album_name, discogs_token)
-            art_url = get_release_cover_art_url(release_id, discogs_token)
-            if art_url is not None:
-                save_file_path = os.path.join(album_cover_dir, album_name + '.jpg')
-                download_cover_image(art_url, save_file_path)
-            else:
-                print(f'Album {album_name} -- no art found.')
+            if release_id is not None:
+                art_url = get_release_cover_art_url(release_id, discogs_token)
+                if art_url is not None:
+                    save_file_path = os.path.join(album_cover_dir, album_name + '.jpg')
+                    download_cover_image(art_url, save_file_path)
+                else:
+                    print(f'Album {album_name} -- no art found.')
 
 
 
@@ -449,6 +450,7 @@ if __name__ == "__main__":
         print("2) Login or create an account")
         print("3) click on \"Generate new token\" (personal access token)")
         print("4) create an environmental variable called DISCOGS_PERSONAL_TOKEN, put the token as its value")
+        print("5) Reboot so it kicks in")
 
 
 
