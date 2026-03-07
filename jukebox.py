@@ -124,8 +124,6 @@ HANDLE_EOS_DELAY = 0.1 # seconds
 LABEL_WIDTH = 300  # Eventually should use these to be smart about font sizes and text wrapping
 BUTTON_WIDTH = 120
 
-# buttons_font_stack = [''] # placeholder
-# labels_font_stack = ['']
 
 # Read configuration file
 # should contain:
@@ -1038,7 +1036,6 @@ class LabelPanel:
             return(1)
 
 
-
     # find if and which button has been clicked
     # using proximity to button label center coords
     def process_click(self, click_x, click_y):
@@ -1380,7 +1377,6 @@ class AlbumPanel:
                     self.album_open = 0
                     self.page_number = 0
 
-
         else:
             # Find which album was clicked
             for album_entry in self.visible_albums:
@@ -1414,18 +1410,8 @@ class AlbumPanel:
     def add_all(self):
         print(f'AlbumPanel.add_all() --- album_open={self.album_open}, len(visible_labels) = {len(self.visible_labels)}')
         if self.album_open: # Add all not active for a page full of albums
-            # n_visible = 0
-            # for this_label in self.visible_labels:
-            #     if this_label['visible'] > 0:
-            #         playlist_entry = label_to_playlist_item(this_label)
-            #         print(f'adding to playlist: {playlist_entry["filepath"]}')
-            #         # # animate, somehow
-            #         # # Add song to playlist
-            #         playlist.append(playlist_entry)
             for this_song in self.songlist:
                 player.playlist.append(this_song)
-                    # n_visible += 1
-            #print(f'n_visible = {n_visible}')
 
 #### End class AlbumPanel
 
@@ -1592,22 +1578,11 @@ class ArtistsPanel:
                 # unselect all artists
                 for idx in range(1, len(self.artists_list)):
                     self.artists_selected[idx] = 0
-                # unselect all in visible list
-                # for this_label in self.visible_list:
-                #     #this_label['selected'] = 0
-                #     self.artists_selected[clicked_label['artist_idx']] = 0
-                # # unselect all in non-visible list
-                # for idx in range(0, len(self.artists_list)):
-                #     self.artists_selected[idx] = 0
-                # clicked_label['selected'] = 1  # no write back, still works!
 
             else:
                 #listindex = self.artists_list.index(clicked_artist) # index of artist in non-visible list
 
-                # unselect 'all'
-                #self.all_selected = 0
-                #self.visible_list[0]['selected'] = 0
-                self.artists_selected[0] = 0 # 'All'
+                self.artists_selected[0] = 0 # unselectm'All'
                 # select what was clicked, or unselect it if it already was
                 #already_selected = self.visible_list[entry_idx]['selected']
                 already_selected = self.artists_selected[clicked_artist_idx]
@@ -1641,10 +1616,7 @@ class PlayList:
         self.topsong_index = 0 # playlist index of the song currently playing or 0 if not
         self.page_index = 0 # which page of the list should be showing
         self.n_labels_horz = 1
-        # playlist_panel_edge_top = window_height - 10  # 1070
-        # playlist_panel_edge_bot = 190
-        # playlist_panel_label_width = 300
-        # playlist_panel_label_height = 93
+
         playlist_verticalspace = playlist_panel_edge_top - playlist_panel_edge_bot - self.headspace
         self.n_labels_vert = playlist_verticalspace // playlist_panel_label_height
         print(f'playlist n_labels_vert={self.n_labels_vert}')
@@ -1665,11 +1637,11 @@ class PlayList:
                 title = f'Title {idx}'
                 artist = f'Artist {idx}'
                 album = f'Album {idx}'
-                this_genre = 'undefined'
-                filepath = ''
-                duration_s = 0
-                this_year = 1876
-                album_id = ''
+                # this_genre = 'undefined'
+                # filepath = ''
+                # duration_s = 0
+                # this_year = 1876
+                # album_id = ''
                 visible_flag = 0
 
             else:
@@ -1786,15 +1758,6 @@ class PlayList:
             album_label = label_entry['album_label']
             list_index = label_entry['list_index'] % len(label_blanks)
 
-            #title_label, artist_label, album_label = format_labels(this_title, this_artist, this_album, xl, yl)
-            # if label_entry['visible'] > 0 :
-            #     #label_blank.blit(x_label, y_label)
-            #     label_blanks[list_index].blit(x_label, y_label)
-            #     for title_label in title_labels:
-            #         title_label.draw()
-            #     artist_label.draw()
-            #     album_label.draw()
-
             if label_entry['visible'] > 0 :
                 #print('draw_labels:', label_entry)
                 if label_entry['juiced'] > 0:
@@ -1860,7 +1823,6 @@ class PlayList:
             print(f'label x_mid y_mid = {x_mid}, {y_mid}')
             filepath = label_entry['filepath']
             #print(f'added {filepath}')
-            # animate, somehow
             # Add song to playlist
             #playlist.append(clicked_label)
 
@@ -1973,25 +1935,6 @@ class ControlButtonPanel:
 
         return(hit_button_index_plus_one)
 
-    # def play_media(self, play_item):
-    #     global player
-    #
-    #     play_progress_bar.start_timer(play_item)
-    #
-    #     if play_item['filepath'][0:7] == 'spotify':  # pass this on to the spotify app
-    #         print(f'Spotify tune {play_item["filepath"]}')
-    #         spotify_client.play(play_item['filepath'])
-    #         spotify_client.set_stop_time(play_item['duration_s'])  # we need to check, it won't stop by itself
-    #         play_control_buttons.is_spotify_track = 1
-    #         if config['scraping_enable'] == 'on':
-    #             audacity_client.stop()  # if song got skipped, audacity is still recording
-    #             audacity_client.clearTrack()
-    #             audacity_client.record()
-    #     else:
-    #         music = get_media(play_item)
-    #         player.queue(music)
-    #         player.play()
-    #         play_control_buttons.is_spotify_track = 0
 #### End class ControlButtonPanel`
 
 class ProgressBar:
@@ -2116,18 +2059,6 @@ def set_and_load_fonts(config, button_width, label_width):
     else:
         print(f'*** WARNING Font "{label_font_name}" NOT available')
         print(f'*** Try and find it here: https://fontlibrary.org/')
-
-    # try:
-    #     buttons_font = pyglet.font.load(button_font_name, buttons_font_size)
-    #     print(buttons_font)
-    # except:
-    #     print(f'*** WARNING Font "{button_font_name}" could not be loaded.')
-    #
-    # try:
-    #     labels_font = pyglet.font.load(label_font_name, labels_font_size)
-    #     print(labels_font)
-    # except:
-    #     print(f'*** WARNING Font "{label_font_name}" could not be loaded.')
 
     return(button_font_stack, label_font_stack)
 
@@ -2390,8 +2321,6 @@ def import_music(start_folders, map_artists_to_genre, map_albums_to_genre, map_c
 
         list_idx += 1
 
-
-
     print(f"{n_visited} files examined.")
 
     return(all_music)
@@ -2444,10 +2373,6 @@ def build_albums_list(all_music):
                 if music_record['album'] == album_record['album']:
                     singles_list.append(music_record)
                     break
-
-    # for album_record in triaged_album_list:
-    #     if album_record['album'] == "Starmania":
-    #         print(album_record)
 
     # for album_record in triaged_album_list:
     #     append_fetch_cover_art_list(album_record['album']) # adds a to-fetch item, if not exists
@@ -2964,9 +2889,6 @@ songs_page_buttons = ControlButtonPanel(songs_page_control_buttons_x, songs_page
 artists_page_buttons = ControlButtonPanel(artists_panel_page_buttons_x, artists_panel_page_buttons_y, button_list=['up', 'down'], button_set=2)
 playlist_page_buttons = ControlButtonPanel(play_control_buttons_x, play_control_buttons_y - 80, button_list=['up', 'down', 'clear'], button_set=1)
 
-#window = pyglet.window.Window(width=screen_width, height=screen_height, fullscreen=True)
-# pyglet.options['audio'] = ('pulse', ) # trying something different than openal, since we're getting problems
-
 player = MediaPlayer(config)
 ze_playlist = PlayList(player.playlist, labels_font_stack)
 
@@ -3134,13 +3056,7 @@ def on_mouse_press(x, y, button, modifiers):
             else: # clear playlist
                 player.playlist = []
                 player.stop()
-                #player.queue = []
-                # flush the queue DEPRECATED
-                # while not (player.source == None):
-                #     player.next_source()
-                #player.delete() # doesn't do anything?
                 play_control_buttons.playing = 0
-                # flip to first page of playlist, since it's empty now
             ze_playlist.page_index = 0  # reset position
             ze_playlist.topsong_index = 0
             ze_playlist.update_visible_list(0,0)
@@ -3178,11 +3094,6 @@ def on_mouse_press(x, y, button, modifiers):
                             # player.play_progress_bar.depause()
                             play_control_buttons.buttons[0]['active'] = 0
                             player.play_pause()
-                            # if play_control_buttons.is_spotify_track:
-                            #     player.spotify_client.play_pause()
-                            # else:
-                            #     player.play()
-                            #control_buttons.buttons[0]['flag'] = 1
 
             elif button_index == 1: # skip
                 print("skip button pressed")
@@ -3209,7 +3120,6 @@ def on_mouse_press(x, y, button, modifiers):
                                 player.play_media(play_item)
                             ze_playlist.update_visible_list(0, 0)
 
-
             # elif button_index == 2: # shuffle
             #     playlist = shuffle_playlist(playlist, ze_playlist.topsong_index, play_control_buttons.playing)
             #     print(f'play_control_buttons.playing={play_control_buttons.playing}')
@@ -3234,6 +3144,7 @@ def on_mouse_press(x, y, button, modifiers):
             #     #ze_playlist.topsong_index = 0
             #     ze_playlist.update_visible_list(0,0)
             #     play_control_buttons.buttons[2]['flag'] = 0
+
     elif songs_page_control_button_click:
         button_index = songs_page_control_button_click - 1
         print(f'song page button {button_index} clicked')
@@ -3307,33 +3218,6 @@ def on_draw():
             ze_playlist.update_visible_list(0,0)
     ze_playlist.draw_labels()
     artist_list.draw_labels()
-
-    # if player.eos_flag:
-    #     print(f'on_draw() eos_flag = {player.eos_flag}, eos_time = {eos_time}, now = {time.time()}')
-    #
-    # if player.eos_flag and (time.time() - player.eos_time) > HANDLE_EOS_DELAY:
-    #     print('on_draw() eos handling ---')
-    #     player.eos_flag = 0
-    #     if play_control_buttons.playing:
-    #         if ze_playlist.scroll_down_one(play_control_buttons) > 0:
-    #             #play_control_buttons.buttons[0]['flag'] = 0
-    #             play_control_buttons.playing = 0
-    #             play_control_buttons.buttons[0]['active'] = 1 # 'play'
-    #             playlist_page_buttons.buttons[2]['active'] = 1 # 'clear'
-    #         else:  # cue up next song
-    #             # Clean up current source
-    #             if player.playing:
-    #                 player.pause()
-    #             time.sleep(0.1)
-    #             while player.source:
-    #                 player.next_source() # flush
-    #             time.sleep(0.1)  # attempt to resolve a race condition that results in "interrupted by signal 11:SIGSEGV" error
-    #             play_item = playlist[ze_playlist.topsong_index]
-    #             print(f'on_draw() eos queuing up: {playlist[ze_playlist.topsong_index]["filepath"]}')
-    #             #play_control_buttons.play_media(play_item)
-    #             player.play_media(play_item)
-    #             # time.sleep(0.1) # ???
-    #         ze_playlist.update_visible_list(0,0)
 
 
 pyglet.app.run()
