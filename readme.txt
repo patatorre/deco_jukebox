@@ -3,7 +3,7 @@ Deco Jukebox
 This is a Python jukebox designed for a touch-screen interface. Just point it to your iTunes library and go! The top buttons changes the view between Singles / Tracks / Albums. The interface lets you sort by epochs, genres, and artists. The middle panel will contain a random selection of tracks, or show all the albums. In track view, add to the playlist by tapping a song label, or add all by tapping "add all".
 
 Quick start:
-1) Install python (3.12 is current as of this writing) and the packages listed in requirements.txt
+1) Install python (3.12 is current as of this writing) and the packages listed in requirements.txt. Windows: click-check "Add python.exe to PATH" during installation. install packages with "pip install whatever" on a command line, with whatever=pyglet, python-vlc, unidecode, mutagen, requests.
 2) Install VLC. On Ubuntu do NOT use the snap install. Just "sudo apt install vlc". on Windows go to the official site: https://www.videolan.org/vlc/.
 3) Clone this repo, unzip it if it's zipped.
 4) In the repo files, edit the jukebox.cfg file.
