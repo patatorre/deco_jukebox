@@ -2117,8 +2117,13 @@ def list_files_in_nested_folders(root_folder):
 
 # retrieve metadata from the audio file: artist, album, genre, date
 def get_tune_metadata(filename):
-    audiofile = mutagen.File(filename)
     #print(filename)
+    try:
+    	audiofile = mutagen.File(filename)
+    except mutagen.MutagenError:
+    	print("Error reading headers for ", filename)
+    	return([""], [""], ["Unknown album"], 1600, [""], 0, 1)
+    	
     error_flag = 0
     audiotype = filename[-3:]
     # print(f"audiotype:{audiotype}")
