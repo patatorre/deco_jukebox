@@ -1,10 +1,12 @@
 # Create missing metadata for mp3 files
 # Using discogs to fill in the gaps
 # WARNING: will try to guess artist/album from the directory path
+#   if the flag below is set to 1 (and path is deep enough)
 #
 # Patrick Dumais
 # patatorre "at" proton.me
 # github.com/patatorre
+
 
 ALLOW_NAME_GUESSING_FROM_PATH = 1 # set to 1 if library is organized like iTunes library music/artist/album/song.mp3
 
