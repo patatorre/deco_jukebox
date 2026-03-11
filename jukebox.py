@@ -27,7 +27,7 @@ import vlc
 from pathlib import Path
 
 # display is customized only for the resolutions listed below
-resolutions = ['1600x900', '1920x1080']
+resolutions = ['1600x900', '1920x1080', '1280x720']
 resolutions_x = []
 resolutions_y = []
 for rez in resolutions:
@@ -63,8 +63,8 @@ else:
     rez_idx = 0
 
 # # rasp pi screen size, to try
-# screen_width = 1280
-# screen_height = 720
+# screen_width = 1024
+# screen_height = 600
 
 window_width = screen_width
 
@@ -516,8 +516,9 @@ class ButtonPanel:
 
             xl = xl + self.button_spacing_horz
             if xl + self.button_spacing_horz > self.buttons_panel_right:
-                xl = self.buttons_panel_left
-                yl = yl - self.button_spacing_vert
+                break # just skip buttons that don't fit in a single line
+                # xl = self.buttons_panel_left
+                # yl = yl - self.button_spacing_vert
 
         # now do the genre buttons
         xl = self.buttons_panel_left
@@ -533,8 +534,9 @@ class ButtonPanel:
 
             xl = xl + self.button_spacing_horz
             if xl + self.button_spacing_horz > self.buttons_panel_right:
-                xl = self.buttons_panel_left
-                yl = yl - self.button_spacing_vert
+                break # just skip buttons that don't fit in a single line
+                # xl = self.buttons_panel_left
+                # yl = yl - self.button_spacing_vert
 
         print(self.genre_buttons)
 
