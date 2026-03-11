@@ -400,20 +400,34 @@ def download_cover_image(image_url, output_path):
         return False
 
 
-def discogs_scrape_album_covers(albums_missing_art, album_cover_dir, discogs_token):
+def discogs_scrape_album_covers(albums_missing_art, album_cover_dir, already_tried_covers, discogs_token):
+    new_attempts_list = []
+    skipped = 0
+    not_found = 0
+    download_error = 0
+    retrieved = 0
     for album_name, artist_name in albums_missing_art:
-        if album_name != 'Unknown Album': # if the album title is unknown, then we can't retrieve the art, now can we?
+        save_file_path = os.path.join(album_cover_dir, album_name + '.jpg')
+        if album_name != 'Unknown Album' and save_file_path not in already_tried_covers : # if the album title is unknown, then we can't retrieve the art, now can we?
             release_id, status_code = get_release_id_by_artist_and_album(artist_name, album_name, discogs_token)
             if status_code > 0:
                 print('Aborting scrape.')
                 break
+            new_attempts_list.append(save_file_path)
             if release_id is not None:
                 art_url = get_release_cover_art_url(release_id, discogs_token)
                 if art_url is not None:
-                    save_file_path = os.path.join(album_cover_dir, album_name + '.jpg')
-                    download_cover_image(art_url, save_file_path)
+                    if download_cover_image(art_url, save_file_path):
+                        retrieved += 1
+                    else:
+                        download_error += 1
                 else:
                     print(f'Album {album_name} -- no art found.')
+                    not_found += 1
+        else:
+            skipped += 1
+
+    return skipped, retrieved, not_found, download_error, new_attempts_list
 
 
 
@@ -421,12 +435,24 @@ def discogs_scrape_album_covers(albums_missing_art, album_cover_dir, discogs_tok
 if __name__ == "__main__":
     album_cover_dir = os.path.join('graphics', 'album_covers')
     config_file_name = 'jukebox.cfg'
+    scrape_attempts_log = 'discogs_scrape_album_covers.log' # keep track of what we fixed or tried fixing, so we don't do it over and over
     discogs_token = os.getenv('DISCOGS_PERSONAL_TOKEN')
+    MAX_SCRAPES = 25 # max number of scraping in one go - try to comply with rate limits for discogs
     if discogs_token is not None:
         config = read_ini(config_file_name) # retrieves jukebox.cfg info to find out where the library is
         if not 'music_root_folder' in config:
             print(f'Invalid config file \"{config_file_name}\", does not specify music_root_folder')
         else:
+            # read log
+            if os.path.exists(scrape_attempts_log):
+                print("reading log...", end='', flush=True)
+                with open(scrape_attempts_log) as f:
+                    already_tried_covers = [line.rstrip('\r\n') for line in f]
+                print(f'{len(already_tried_covers)} previous scrape attempts found.')
+            else:
+                already_tried_covers = []
+            logfile = open(scrape_attempts_log, 'a')
+
             music_root_folders = config['music_root_folder'].split(',')
             albums_missing_art = []
             for music_root_folder in music_root_folders:
@@ -446,8 +472,13 @@ if __name__ == "__main__":
                     albums_missing_art += this_albums_missing_art
 
             # now go scrape
-            discogs_scrape_album_covers(albums_missing_art, album_cover_dir, discogs_token)
+            n_skipped, n_retrieved, n_not_found, n_download_error, new_attempts_list = \
+                discogs_scrape_album_covers(albums_missing_art, album_cover_dir, already_tried_covers, discogs_token)
+            print(f'{n_skipped} skipped, {n_retrieved} retrieved, {n_not_found} not found, {n_download_error} download error.')
 
+            # log failed attempts
+            for item in new_attempts_list:
+                logfile.write(item + os.linesep)
 
     else:
         print("Discogs Personal Token not found. You need to do the following:")
