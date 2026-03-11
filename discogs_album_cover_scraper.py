@@ -3,6 +3,7 @@ import requests
 import os
 import time
 import mutagen
+from requests.exceptions import HTTPError, RequestException
 
 # retrieve metadata from the audio file: artist, album, genre, date
 def get_tune_metadata(filename):
@@ -246,7 +247,8 @@ def get_artist_releases(artist_id, token, per_page=50):
 
 
 def get_release_id_by_artist_and_album(artist_name, album_name, token):
-
+    status_code = 0
+    release_id = None
     # Build search URL with filters
     url = "https://api.discogs.com/database/search"
 
@@ -271,38 +273,38 @@ def get_release_id_by_artist_and_album(artist_name, album_name, token):
 
         if not results:
             print(f"No releases found for {artist_name} - {album_name}")
-            return None
-
-        # Display matches to help with selection
-        print(f"Found {len(results)} potential matches:")
-        for i, result in enumerate(results):  # Show first 3
-            print(f"  {i + 1}. {result.get('id')}:{result.get('title')} (Year: {result.get('year', 'N/A')})")
-
-        # Select a release that has the earliest release date
-        earliest_release_date = 6666
-        best_idx = 0
-        for idx, result in enumerate(results):
-            year = int(result.get('year', '0'))
-            if year > 0 :
-                if year < earliest_release_date:
-                    earliest_release_date = year
-                    best_idx = idx
-        best_match = results[best_idx]
-        release_id = best_match.get('id')
-
-        if release_id:
-            print(f"Selected release ID: {release_id}")
-            return release_id
         else:
-            print("No ID found in result")
-            return None
+            # Display matches to help with selection
+            print(f"Found {len(results)} potential matches:")
+            for i, result in enumerate(results):  # Show first 3
+                print(f"  {i + 1}. {result.get('id')}:{result.get('title')} (Year: {result.get('year', 'N/A')})")
 
-    except requests.exceptions.RequestException as e:
-        print(f"API request failed: {e}")
-        return None
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        return None
+            # Select a release that has the earliest release date
+            earliest_release_date = 6666
+            best_idx = 0
+            for idx, result in enumerate(results):
+                year = int(result.get('year', '0'))
+                if year > 0 :
+                    if year < earliest_release_date:
+                        earliest_release_date = year
+                        best_idx = idx
+            best_match = results[best_idx]
+            release_id = best_match.get('id')
+
+            if release_id:
+                print(f"Selected release ID: {release_id}")
+            else:
+                print("No ID found in result")
+
+    except HTTPError as e:
+        status_code = response.status_code
+        if  status_code == 429:
+            print(f"Rate limit exceeded. Try again in a minute.")
+        else:
+            print(f"HTTP error {response.status_code}: {e}")
+
+
+    return release_id, status_code
 
 
 # Example usage with your existing genre-fetching function
@@ -401,7 +403,10 @@ def download_cover_image(image_url, output_path):
 def discogs_scrape_album_covers(albums_missing_art, album_cover_dir, discogs_token):
     for album_name, artist_name in albums_missing_art:
         if album_name != 'Unknown Album': # if the album title is unknown, then we can't retrieve the art, now can we?
-            release_id = get_release_id_by_artist_and_album(artist_name, album_name, discogs_token)
+            release_id, status_code = get_release_id_by_artist_and_album(artist_name, album_name, discogs_token)
+            if status_code > 0:
+                print('Aborting scrape.')
+                break
             if release_id is not None:
                 art_url = get_release_cover_art_url(release_id, discogs_token)
                 if art_url is not None:
