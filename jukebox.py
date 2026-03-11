@@ -24,7 +24,7 @@ from mutagen.id3 import ID3TimeStamp
 # import spotify_controller
 # import audacity_controller
 import vlc
-
+from pathlib import Path
 
 # display is customized only for the resolutions listed below
 resolutions = ['1600x900', '1920x1080']
@@ -61,6 +61,10 @@ if rez_idx >= 0:
 else:
     print(f"Screen resolution: {screen.width}x{screen.height} is not one of the default, forcing to {resolutions[0]}")
     rez_idx = 0
+
+# # rasp pi screen size, to try
+# screen_width = 1280
+# screen_height = 720
 
 window_width = screen_width
 
@@ -353,7 +357,9 @@ class MediaPlayer:
 
     def queue(self, song_path):
         #media = vlc.Media(song_path)
-        self.this_player.set_media(vlc.Media(song_path))
+        file_path = Path(song_path)
+        media_uri = file_path.as_uri()
+        self.this_player.set_media(vlc.Media(media_uri))
 
     def flush_queue(self):
         self.this_player.set_media(None)
@@ -531,6 +537,10 @@ class ButtonPanel:
                 yl = yl - self.button_spacing_vert
 
         print(self.genre_buttons)
+
+        # startup: activate All/All
+        self.genre_buttons[0]['flag'] = 1
+        self.epoch_buttons[0]['flag'] = 1
 
     def draw_buttons(self):
 
@@ -904,7 +914,10 @@ class LabelPanel:
         self.n_labels_vert = labels_vert_space // self.label_height
         self.songs_per_page = self.n_labels_horz * self.n_labels_vert
         self.spacing_vert = math.floor((self.edge_top - self.edge_bot) / self.n_labels_vert)
-        self.spacing_horz = math.floor((self.edge_right - self.edge_left - self.label_width) / (self.n_labels_horz - 1))
+        if self.n_labels_horz > 1:
+            self.spacing_horz = math.floor((self.edge_right - self.edge_left - self.label_width) / (self.n_labels_horz - 1))
+        else:
+            self.spacing_horz = 100 # this won't be used, but if it is, we'll see it
         self.filtered_list = []
         self.double_filtered_list = []
         self.visible_labels = []
@@ -1177,7 +1190,10 @@ class AlbumPanel:
         self.songs_per_page = self.n_labels_horz * self.n_labels_vert
         self.spacing_vert = math.floor((self.edge_top - self.edge_bot) / self.n_labels_vert)
         label_panel_width = self.edge_right - self.edge_left - self.label_width - self.big_album_cover_size - 40
-        self.spacing_horz = math.floor((label_panel_width) / (self.n_labels_horz - 1))
+        if self.n_labels_horz > 1:
+            self.spacing_horz = math.floor((label_panel_width) / (self.n_labels_horz - 1))
+        else:
+            self.spacing_horz = 100 # this won't be used, but if it is, we'll see it
         self.visible_labels = []
         self.songlist = [] # for the open album
         
@@ -2616,7 +2632,9 @@ def get_media(play_item):
     pyglet.resource.reindex()
     # print("Resource Path:", pyglet.resource.path)
     #music = pyglet.resource.media(music_file_name)
-    music = vlc.Media(music_file)
+    file_path = Path(music_file)
+    media_uri = file_path.as_uri()
+    music = vlc.Media(media_uri)
     print(music)
     return(music)
 
@@ -2906,6 +2924,35 @@ playlist_page_buttons = ControlButtonPanel(play_control_buttons_x, play_control_
 player = MediaPlayer(config)
 ze_playlist = PlayList(player.playlist, labels_font_stack)
 
+# starting lineup
+singles_panel.filtered_list = button_panel.update_filtered(all_singles_list)
+tracks_panel.filtered_list = button_panel.update_filtered(all_music)
+albums_panel.filtered_list = button_panel.update_filtered(albums_list)
+
+artist_list.update_artists_list(tracks_panel.filtered_list)
+tracks_panel.page_number = 0  # contents has changed, just go to top
+tracks_panel.update_visible_list()
+
+artist_list.page_number = 0
+artist_list.all_selected = 1
+artist_list.update_visible_list()
+tracks_panel.update_double_filtered_list(artist_list)
+albums_panel.update_double_filtered_list(artist_list)
+singles_panel.update_double_filtered_list(artist_list)
+# spotify_panel.update_double_filtered_list(artist_list)
+tracks_panel.page_number = 0  # contents has changed, just go to top
+albums_panel.page_number = 0
+singles_panel.page_number = 0
+spotify_panel.page_number = 0
+tracks_panel.update_visible_list()
+albums_panel.update_visible_list()
+singles_panel.update_visible_list()
+
+@window.event
+def on_mouse_scroll(x, y, scroll_x, scroll_y):
+    print(f"scroll_x: {scroll_x}, scroll_y: {scroll_y}")
+
+# spotify_panel.update_visible_list()
 @window.event
 def on_mouse_press(x, y, button, modifiers):
     #global playlist
@@ -3007,6 +3054,7 @@ def on_mouse_press(x, y, button, modifiers):
 
         artist_list.page_number = 0
         artist_list.all_selected = 1
+        artist_list.update_artists_list(tracks_panel.filtered_list)
         artist_list.update_visible_list()
         tracks_panel.update_double_filtered_list(artist_list)
         albums_panel.update_double_filtered_list(artist_list)
