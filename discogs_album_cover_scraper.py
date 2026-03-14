@@ -400,13 +400,15 @@ def download_cover_image(image_url, output_path):
         return False
 
 
-def discogs_scrape_album_covers(albums_missing_art, album_cover_dir, already_tried_covers, discogs_token):
+def discogs_scrape_album_covers(albums_missing_art, album_cover_dir, already_tried_covers, max_scrapes, discogs_token):
     new_attempts_list = []
     skipped = 0
     not_found = 0
     download_error = 0
     retrieved = 0
     for album_name, artist_name in albums_missing_art:
+        if (not_found + download_error + retrieved) >= max_scrapes:
+            break
         save_file_path = os.path.join(album_cover_dir, album_name + '.jpg')
         if album_name != 'Unknown Album' and save_file_path not in already_tried_covers : # if the album title is unknown, then we can't retrieve the art, now can we?
             release_id, status_code = get_release_id_by_artist_and_album(artist_name, album_name, discogs_token)
@@ -437,7 +439,7 @@ if __name__ == "__main__":
     config_file_name = 'jukebox.cfg'
     scrape_attempts_log = 'discogs_scrape_album_covers.log' # keep track of what we fixed or tried fixing, so we don't do it over and over
     discogs_token = os.getenv('DISCOGS_PERSONAL_TOKEN')
-    MAX_SCRAPES = 25 # max number of scraping in one go - try to comply with rate limits for discogs
+    MAX_SCRAPES = 50 # max number of scraping in one go - try to comply with rate limits for discogs
     if discogs_token is not None:
         config = read_ini(config_file_name) # retrieves jukebox.cfg info to find out where the library is
         if not 'music_root_folder' in config:
@@ -473,7 +475,7 @@ if __name__ == "__main__":
 
             # now go scrape
             n_skipped, n_retrieved, n_not_found, n_download_error, new_attempts_list = \
-                discogs_scrape_album_covers(albums_missing_art, album_cover_dir, already_tried_covers, discogs_token)
+                discogs_scrape_album_covers(albums_missing_art, album_cover_dir, already_tried_covers, MAX_SCRAPES, discogs_token)
             print(f'{n_skipped} skipped, {n_retrieved} retrieved, {n_not_found} not found, {n_download_error} download error.')
 
             # log failed attempts

@@ -26,6 +26,37 @@ from mutagen.id3 import ID3TimeStamp
 import vlc
 from pathlib import Path
 
+
+def is_windows():
+    probably_windows = 0
+    if os.path.exists("C:\\"):
+        probably_windows = 1
+    return(probably_windows)
+
+
+def is_raspberry_pi():
+    try:
+        with open('/proc/device-tree/compatible', 'rb') as f:
+            compatible_data = f.read().split(b'\0')
+            for entry in compatible_data:
+                if entry:
+                    vendor, model = entry.decode('ascii').split(',', 1)
+                    if vendor == 'raspberrypi':
+                        return True
+            return False
+    except FileNotFoundError:
+        return False
+
+
+on_windows = is_windows()
+if not on_windows:
+    raspberrypi = is_raspberry_pi()
+    if raspberrypi:
+        pyglet.options['shadow_window'] = False
+else:
+    raspberrypi = False
+
+
 # display is customized only for the resolutions listed below
 resolutions = ['1600x900', '1920x1080', '1280x720']
 resolutions_x = []
@@ -44,6 +75,12 @@ print(resolutions_x, resolutions_y)
 # Get the default display
 display = pyglet.display.get_display()
 screen = display.get_default_screen()
+pyg_config = screen.get_best_config()
+if raspberrypi:
+    pyg_config.opengl_api = 'gles'
+    pyg_config.major_version = 3
+    pyg_config.minor_version = 1
+
 screen_width = screen.width
 screen_height = screen.height
 
@@ -63,20 +100,12 @@ else:
     rez_idx = 0
 
 # # rasp pi screen size, to try
-# screen_width = 1024
-# screen_height = 600
+# screen_width = 1280
+# screen_height = 720
 
 window_width = screen_width
 
-
-def is_windows():
-    probably_windows = 0
-    if os.path.exists("C:\\"):
-        probably_windows = 1
-    return(probably_windows)
-
-
-if is_windows():
+if on_windows:
     window_height = screen_height
 else:
     window_height = screen_height - 30 # not fullscreen, make room for the top bar
@@ -92,7 +121,7 @@ top_buttons_y = window_height - 50 #1030 or 850
 
 # selection buttons pane
 selection_buttons_panel_left = 0
-selection_buttons_panel_right = [window_width-320, window_width-320][rez_idx]
+selection_buttons_panel_right = [window_width-320, window_width-320, window_width-320][rez_idx]
 selection_buttons_panel_top = 100
 selection_buttons_panel_bot = 0
 selection_button_spacing_horz = 116 #120
@@ -1222,7 +1251,7 @@ class AlbumPanel:
                 y_label = self.edge_top - self.spacing_vert
 
         back_button_x = self.edge_left + 5
-        back_button_y = self.edge_bot + 5
+        back_button_y = self.edge_bot + 0
         self.back_button = JuicedButton(back_button_x, back_button_y, back_button_lit_file, back_button_unlit_file)
         self.big_album_cover_image = get_album_art(default_cover_image_file, self.big_album_cover_size)
         # this_cover_image.blit(self.edge_left, self.edge_top - self.big_album_cover_size)
@@ -2850,7 +2879,7 @@ eos_time = time.time()
 # window = pyglet.window.Window(width=screen_width, height=screen_height, fullscreen=True)
 
 window = pyglet.window.Window(width=window_width, height=window_height, fullscreen=False,
-                              style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS)
+                              style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS, config=pyg_config)
 
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
