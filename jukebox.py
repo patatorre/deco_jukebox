@@ -85,6 +85,7 @@ screen_width = screen.width
 screen_height = screen.height
 
 # find resolution in list
+
 rez_idx = -1
 idx = 0
 for rez_x, rez_y in zip(resolutions_x, resolutions_y):
