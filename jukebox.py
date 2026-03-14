@@ -10,10 +10,9 @@
 # https://buymeacoffee.com/patrickdumais
 #
 # For user customizations of genres etc., have a look at the readme.txt in user_classifications/
-from operator import is_
 
 import pyglet
-from pyglet.gl import *
+#from pyglet.gl import *
 import mutagen
 import os
 import math
@@ -21,8 +20,8 @@ import random
 import time
 from unidecode import unidecode
 from mutagen.id3 import ID3TimeStamp
-# import spotify_controller
-# import audacity_controller
+import spotify_controller
+import audacity_controller
 import vlc
 from pathlib import Path
 
@@ -56,6 +55,7 @@ if not on_windows:
 else:
     raspberrypi = False
 
+from pyglet.gl import * # on a pi, the shadow_window = False must precede even this statement
 
 # display is customized only for the resolutions listed below
 resolutions = ['1600x900', '1920x1080', '1280x720']
@@ -243,12 +243,12 @@ album_art_folder = os.path.join(graphics_folder, 'album_covers')
 seek_album_art_filename = os.path.join(album_art_folder,'requests.txt')
 
 labels_folder = os.path.join(graphics_folder, "labels")
-label_file1 = os.path.join(labels_folder, "vividred1-300x93.jpg")
-label_dimmed_file1 =  os.path.join(labels_folder, "vividred1_dimmed_300x93.jpg")
-label_file2 = os.path.join(labels_folder, "powederblue300x93.jpg")
-label_dimmed_file2 =  os.path.join(labels_folder, "powederblue_dimmed_300x93.jpg")
-label_file3 = os.path.join(labels_folder, "green_v2_300x93.jpg")
-label_dimmed_file3 =  os.path.join(labels_folder, "green_dimmed_v2_300x93.jpg")
+label_file1 = os.path.join(labels_folder, "vividred1-300x93.png")
+label_dimmed_file1 =  os.path.join(labels_folder, "vividred1_dimmed_300x93.png")
+label_file2 = os.path.join(labels_folder, "powederblue300x93.png")
+label_dimmed_file2 =  os.path.join(labels_folder, "powederblue_dimmed_300x93.png")
+label_file3 = os.path.join(labels_folder, "green_300x93.png")
+label_dimmed_file3 =  os.path.join(labels_folder, "green_dimmed_300x93.png")
 label_files = [label_file1, label_file2, label_file3]
 label_dimmed_files = [label_dimmed_file1, label_dimmed_file2, label_dimmed_file3]
 label_highlight_file = os.path.join(labels_folder, "playing_frame_320x113.png")
