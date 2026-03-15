@@ -334,6 +334,30 @@ stop_button = pyglet.image.load(stop_button_file)
 
 definitions_folder = os.path.join(app_folder, "user_classifications")
 
+
+def add_alpha_channel(image):
+    """Convert an RGB image to RGBA with full opacity."""
+    image_data = image.get_image_data()
+
+    # Get RGB data
+    pitch = image_data.width * 3
+    rgb_data = image_data.get_data('RGB', pitch)
+
+    # Add alpha byte (255) to each pixel
+    rgba_data = bytearray()
+    for i in range(0, len(rgb_data), 3):
+        rgba_data.extend(rgb_data[i:i + 3])
+        rgba_data.append(255)
+
+    # Create new RGBA image
+    return pyglet.image.ImageData(
+        image.width,
+        image.height,
+        'RGBA',
+        bytes(rgba_data),
+        pitch=image.width * 4
+    )
+
 class MediaPlayer:
     def __init__(self, config):
         self.this_player = vlc.MediaPlayer()
@@ -2791,32 +2815,33 @@ def find_album_songs_deprecated(dir_path, artist):
 
 def get_album_art(album_title, new_width):
     cover_art = None
-    path = os.path.join(album_art_folder, album_title + '.jpg')
+    path = os.path.join(album_art_folder, album_title + '.png')
     new_height = new_width
     try:
         cover_art_image =pyglet.image.load(path)
         #print(f'image width={cover_art_image.width}, height={cover_art_image.height}')
-        cover_art_texture = cover_art_image.get_texture(cover_art_image)
+        #image_rgba = add_alpha_channel(cover_art_image)
+        #cover_art_texture = cover_art_image.get_texture(image_rgba)
         #scaled_image = texture.get_texture().get_region(0, 0, cover_art.width, cover_art.height)
         #scaled_image.width = new_width
         #scaled_image.height = new_height
         #sprite = pyglet.sprite.Sprite(texture)
-        scale_x = new_width / cover_art_texture.width
-        scale_y =  new_height / cover_art_texture.height
+        scale_x = new_width / cover_art_image.width
+        scale_y =  new_height / cover_art_image.height
         #print(f'texture width={texture.width}, height={texture.height}, target width={new_width}, height={new_height}')
         #cover_art = sprite
     except Exception as e:
         print(e)
         #texture = default_cover_texture
-        cover_art_texture = default_cover_texture
-        scale_x = new_width / cover_art_texture.width
-        scale_y =  new_height / cover_art_texture.height
+        cover_art_image = default_cover_image
+        scale_x = new_width / default_cover_image.width
+        scale_y =  new_height / default_cover_image.height
         # # make note of missing album art
         # write_line = album_title + '\n'
         # fp = open(seek_album_art_filename, 'a')
         # fp.write(write_line)
         # fp.close()
-    return(cover_art_texture, scale_x, scale_y)
+    return(cover_art_image, scale_x, scale_y)
 
 
 def append_fetch_cover_art_list(album_title):
@@ -2962,7 +2987,7 @@ except:
     genres_list = []
 
 default_cover_image = pyglet.image.load(default_cover_image_file)
-default_cover_texture = default_cover_image.get_texture()
+#default_cover_texture = default_cover_image_rgba.get_texture()
 # all_tunes_paths = list_files_in_nested_folders(music_root_folder)
 map_artists_to_genre, map_albums_to_genre, map_custom_genres = read_genre_mappings(genres_list)
 print(map_custom_genres)
