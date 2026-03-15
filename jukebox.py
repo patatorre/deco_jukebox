@@ -324,6 +324,7 @@ all_button_80 = pyglet.image.load(all_button_file)
 #top_button_off = pyglet.image.load(top_button_off_file)
 #top_button_on = pyglet.image.load(top_button_on_file)
 default_cover_image = pyglet.image.load(default_cover_image_file)
+default_cover_texture = default_cover_image.get_texture()
 artists_cell_selected = pyglet.image.load(square_button_blue_on_file)
 artists_cell_unselected = pyglet.image.load(square_button_blue_off_file)
 clear_button = pyglet.image.load(clear_button_file)
@@ -1193,7 +1194,7 @@ class AlbumPanel:
         y_album_label = self.edge_top - self.album_spacing_vert
         this_album = 'Unknown Album'
         this_artist = 'Unknown Artist'
-        this_cover_image = get_album_art(this_album, self.album_cover_size)
+        this_cover_image, scale_x, scale_y = get_album_art(this_album, self.album_cover_size)
         vert_count = 0
         this_dir_path = ''
         for idx in range(self.albums_per_page):
@@ -1203,8 +1204,11 @@ class AlbumPanel:
                                            color=(255, 255, 255, 255),
                                            x=x_album_label, y=y_album_label,
                                            anchor_x='left', anchor_y='bottom')
+            this_sprite = pyglet.sprite.Sprite(this_cover_image, x=x_album_label, y=y_album_label)
+            this_sprite.scale_x = scale_x
+            this_sprite.scale_y = scale_y
             this_album_entry = {'album': this_album, 'artist': this_artist, 'x_label': x_album_label, 'y_label': y_album_label,
-                                'label': this_label, 'cover': this_cover_image, 'dir_path': this_dir_path, 'visible':0,
+                                'label': this_label, 'sprite': this_sprite, 'dir_path': this_dir_path, 'visible':0,
                                 'year':'1066', 'genre':''}
             self.visible_albums.append(this_album_entry)
             vert_count = vert_count + 1
@@ -1232,7 +1236,7 @@ class AlbumPanel:
         x_label = self.edge_left + self.big_album_cover_size + 50
         y_label = self.edge_top - self.spacing_vert
         vert_count = 0
-        for idx in range(self.songs_per_page):
+        for idx in range(self.songs_per_page): # 'album open' option has labels
 
             # Create placeholder text labels
             title = f'Title {idx}'
@@ -1254,7 +1258,12 @@ class AlbumPanel:
         back_button_x = self.edge_left + 5
         back_button_y = self.edge_bot + 0
         self.back_button = JuicedButton(back_button_x, back_button_y, back_button_lit_file, back_button_unlit_file)
-        self.big_album_cover_image = get_album_art(default_cover_image_file, self.big_album_cover_size)
+        big_album_cover_texture, scale_x, scale_y = get_album_art(default_cover_image_file, self.big_album_cover_size)
+        this_sprite = pyglet.sprite.Sprite(big_album_cover_texture, x=self.big_album_image_x, y=self.big_album_image_y)
+        this_sprite.scale_x = scale_x
+        this_sprite.scale_y = scale_y
+        self.big_album_cover_sprite = this_sprite
+
         # this_cover_image.blit(self.edge_left, self.edge_top - self.big_album_cover_size)
 
     # updates the content of visible list;
@@ -1283,12 +1292,14 @@ class AlbumPanel:
                     this_year = album_record['year']
                     this_genre = album_record['genre']
                     this_dir_path = album_record['dir_path']
-                    this_cover_image = get_album_art(this_album, self.album_cover_size)
+                    this_cover_image, scale_x, scale_y  = get_album_art(this_album, self.album_cover_size)
 
                     self.visible_albums[label_idx]['visible'] = 1
                     self.visible_albums[label_idx]['dir_path'] = this_dir_path
                     self.visible_albums[label_idx]['label'].text = this_album_short
-                    self.visible_albums[label_idx]['cover'] = this_cover_image
+                    self.visible_albums[label_idx]['sprite'].image = this_cover_image
+                    self.visible_albums[label_idx]['sprite'].scale_x = scale_x
+                    self.visible_albums[label_idx]['sprite'].scale_y = scale_y
                     self.visible_albums[label_idx]['album'] = this_album
                     self.visible_albums[label_idx]['artist'] = this_artist # do we need this? YES
                     self.visible_albums[label_idx]['year'] = str(this_year)
@@ -1300,6 +1311,8 @@ class AlbumPanel:
             n_album_songs = len(self.songlist)
             print(f'Songs in open album = {n_album_songs}')
             start_index = self.page_number * self.songs_per_page
+            #this_cover_image, scale_x, scale_y = get_album_art(this_album, self.album_cover_size)
+            #self.big_album_cover_sprite.image = this_cover_image
             for idx in range(self.songs_per_page):
                 label_entry = self.visible_labels[idx]
                 if idx + start_index < n_album_songs:
@@ -1361,7 +1374,12 @@ class AlbumPanel:
         this_dir_path = album_record['dir_path']
         # this_cover_image = get_album_art(this_album, self.big_album_cover_size)
         # this_cover_image.blit(self.edge_left, self.edge_top - self.big_album_cover_size)
-        self.big_album_cover_image.blit(self.big_album_image_x, self.big_album_image_y)
+        #self.big_album_cover_image.blit(self.big_album_image_x, self.big_album_image_y)
+        this_cover_texture, scale_x, scale_y = get_album_art(this_album, self.big_album_cover_size)
+        self.big_album_cover_sprite.image = this_cover_texture
+        self.big_album_cover_sprite.scale_x = scale_x
+        self.big_album_cover_sprite.scale_y = scale_y
+        self.big_album_cover_sprite.draw()
         self.big_album_label.text = this_album
         self.big_album_label.draw()
         self.big_artist_label.text = this_artist
@@ -1396,10 +1414,12 @@ class AlbumPanel:
     def draw_covers(self):
         for album_entry in self.visible_albums:
             if album_entry['visible'] == 1:
-                x_label = album_entry['x_label']
-                y_label = album_entry['y_label']
-                cover = album_entry['cover']
-                cover.blit(x_label, y_label+self.album_title_size+2)
+                # x_label = album_entry['x_label']
+                # y_label = album_entry['y_label']
+                sprite = album_entry['sprite']
+                #cover = album_entry['cover']
+                #cover.blit(x_label, y_label+self.album_title_size+2)
+                sprite.draw()
                 album_label = album_entry['label']
                 album_label.draw()
 
@@ -2774,20 +2794,29 @@ def get_album_art(album_title, new_width):
     path = os.path.join(album_art_folder, album_title + '.jpg')
     new_height = new_width
     try:
-        cover_art =pyglet.image.load(path)
-        scaled_image = cover_art.get_texture().get_region(0, 0, cover_art.width, cover_art.height)
-        scaled_image.width = new_width
-        scaled_image.height = new_height
-        sprite = pyglet.sprite.Sprite(scaled_image)
-        cover_art = sprite.image
-    except:
-        cover_art = default_cover_image
+        cover_art_image =pyglet.image.load(path)
+        #print(f'image width={cover_art_image.width}, height={cover_art_image.height}')
+        cover_art_texture = cover_art_image.get_texture(cover_art_image)
+        #scaled_image = texture.get_texture().get_region(0, 0, cover_art.width, cover_art.height)
+        #scaled_image.width = new_width
+        #scaled_image.height = new_height
+        #sprite = pyglet.sprite.Sprite(texture)
+        scale_x = new_width / cover_art_texture.width
+        scale_y =  new_height / cover_art_texture.height
+        #print(f'texture width={texture.width}, height={texture.height}, target width={new_width}, height={new_height}')
+        #cover_art = sprite
+    except Exception as e:
+        print(e)
+        #texture = default_cover_texture
+        cover_art_texture = default_cover_texture
+        scale_x = new_width / cover_art_texture.width
+        scale_y =  new_height / cover_art_texture.height
         # # make note of missing album art
         # write_line = album_title + '\n'
         # fp = open(seek_album_art_filename, 'a')
         # fp.write(write_line)
         # fp.close()
-    return(cover_art)
+    return(cover_art_texture, scale_x, scale_y)
 
 
 def append_fetch_cover_art_list(album_title):
