@@ -2936,6 +2936,7 @@ eos_time = time.time()
 window = pyglet.window.Window(width=window_width, height=window_height, fullscreen=False,
                               style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS, config=pyg_config)
 
+window.switch_to()
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
