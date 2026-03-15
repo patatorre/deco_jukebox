@@ -323,8 +323,8 @@ small_down_button_off = pyglet.image.load(arrow_down_button_blue_off_file)
 all_button_80 = pyglet.image.load(all_button_file)
 #top_button_off = pyglet.image.load(top_button_off_file)
 #top_button_on = pyglet.image.load(top_button_on_file)
-default_cover_image = pyglet.image.load(default_cover_image_file)
-default_cover_texture = default_cover_image.get_texture()
+# default_cover_image = pyglet.image.load(default_cover_image_file)
+# default_cover_texture = default_cover_image.get_texture()
 artists_cell_selected = pyglet.image.load(square_button_blue_on_file)
 artists_cell_unselected = pyglet.image.load(square_button_blue_off_file)
 clear_button = pyglet.image.load(clear_button_file)
@@ -2961,6 +2961,8 @@ try:
 except:
     genres_list = []
 
+default_cover_image = pyglet.image.load(default_cover_image_file)
+default_cover_texture = default_cover_image.get_texture()
 # all_tunes_paths = list_files_in_nested_folders(music_root_folder)
 map_artists_to_genre, map_albums_to_genre, map_custom_genres = read_genre_mappings(genres_list)
 print(map_custom_genres)
