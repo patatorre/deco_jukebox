@@ -44,6 +44,9 @@ Step by step install on a Raspberry pi / pi OS / Ubuntu
 3) Create a virtual environment. "cd deco_jukebox_master", "python3 -m venv venv". If python isn't installed go to python.org.
 4) Install packages. "source venv/bin/activate", to get the virtual environment going, then "pip install -r requirements.txt".
 5) Edit the .cfg file. "nano jukebox.cfg", then scroll down and change the line starting with music_root_folder=, put in your music folder, probably /home/admin/Music/. Ctrl-O to save, ctrl-X to exit
+6) Install the font manager "sudo apt install font-manager"
+7) Download the "Lavoir" font from: https://fontlibrary.org/en/font/lavoir (there'll be a lot of trash "download" buttons, the correct one is the brownish button top right)
+8) Expand the font .zip and install the font: double-click "lavoir.otf" in the gui
 6) Run jukebox "python3 jukebox.py". Note that you'll have to activate the virtual environment every time you want to run it. Figure out how to script it.
 
 ![Tracks_panel.png](screenshots/Tracks_panel.png)
