@@ -31,13 +31,13 @@ Deco Jukebox works in both. Note Windows and Linux paths use different slashes (
 Raspberry pi:
 Works on a Raspberry pi 5 running either Raspberry OS or Ubuntu. The only weird difference is that the album cover art png's MUST have with RGBA channels. The scraper does take care of that, but if you're supplementing the album cover art yourself, you have to add an alpha channel to the image or the jukebox will crash.
 
-If you enjoy this project, consider buying me a coffee: https://buymeacoffee.com/patrickdumais
+If you enjoy this project, consider buying me a coffee.
 
-Patrick Dumais
-patatorre "at" proton.me
+Patrick Dumais (patatorre "at" proton.me)
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/patrickdumais)
 
-Step by step install on a Raspberry pi
+Step by step install on a Raspberry pi / pi OS / Ubuntu
 --------------------------------------
 1) Open a terminal window
 2) clone the github repo: "git clone https://github.com/patatorre/deco_jukebox.git". If git's not there, "sudo apt update", "sudo apt install git"
@@ -46,3 +46,10 @@ Step by step install on a Raspberry pi
 5) Edit the .cfg file. "nano jukebox.cfg", then scroll down and change the line starting with music_root_folder=, put in your music folder, probably /home/admin/Music/. Ctrl-O to save, ctrl-X to exit
 6) Run jukebox "python3 jukebox.py". Note that you'll have to activate the virtual environment every time you want to run it. Figure out how to script it.
 
+![Tracks_panel.png](screenshots/Tracks_panel.png)
+
+![Albums_panel.png](screenshots/Albums_panel.png)
+
+![Album_open_panel.png](screenshots/Album_open_panel.png)
+
+![Singles_panel.png](screenshots/Singles_panel.png)
