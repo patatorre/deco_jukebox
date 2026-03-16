@@ -47,7 +47,8 @@ Step by step install on a Raspberry pi / pi OS / Ubuntu
 6) Install the font manager "sudo apt install font-manager"
 7) Download the "Lavoir" font from: https://fontlibrary.org/en/font/lavoir (there'll be a lot of trash "download" buttons, the correct one is the brownish button top right)
 8) Expand the font .zip and install the font: double-click "lavoir.otf" in the gui
-6) Run jukebox "python3 jukebox.py". Note that you'll have to activate the virtual environment every time you want to run it. Figure out how to script it.
+9) Install vlc? "sudo apt install vlc". I actually didn't have to do this on my pi OS. 
+10) Run jukebox "python3 jukebox.py". Note that you'll have to activate the virtual environment every time you want to run it. Figure out how to script it.
 
 ![Tracks_panel.png](screenshots/Tracks_panel.png)
 
