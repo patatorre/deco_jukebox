@@ -1177,7 +1177,7 @@ class AlbumPanel:
         self.big_album_cover_size = 240
         self.big_album_image_x = self.edge_left
         self.big_album_image_y = self.edge_top - self.big_album_cover_size - 10
-        self.album_title_size = 15
+        self.album_title_size = 20
         self.page_number = 0
         self.album_open = 0 # 1 if we're looking inside an album
         self.open_album_entry = {}
@@ -1228,7 +1228,7 @@ class AlbumPanel:
                                            color=(255, 255, 255, 255),
                                            x=x_album_label, y=y_album_label,
                                            anchor_x='left', anchor_y='bottom')
-            this_sprite = pyglet.sprite.Sprite(this_cover_image, x=x_album_label, y=y_album_label)
+            this_sprite = pyglet.sprite.Sprite(this_cover_image, x=x_album_label, y=y_album_label+self.album_title_size)
             this_sprite.scale_x = scale_x
             this_sprite.scale_y = scale_y
             this_album_entry = {'album': this_album, 'artist': this_artist, 'x_label': x_album_label, 'y_label': y_album_label,
@@ -2936,7 +2936,7 @@ eos_time = time.time()
 window = pyglet.window.Window(width=window_width, height=window_height, fullscreen=False,
                               style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS, config=pyg_config)
 
-window.switch_to()
+#window.switch_to()
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 

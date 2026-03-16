@@ -4,6 +4,8 @@ import os
 import time
 import mutagen
 from requests.exceptions import HTTPError, RequestException
+from PIL import Image
+import io
 
 # retrieve metadata from the audio file: artist, album, genre, date
 def get_tune_metadata(filename):
@@ -385,11 +387,26 @@ def download_cover_image(image_url, output_path):
         # Stream the download to handle large files efficiently
         with requests.get(image_url, headers=headers, stream=True) as r:
             r.raise_for_status()
+
+            # Read the raw image data into memory
+            image_data = b''
+            for chunk in r.iter_content(chunk_size=8192):
+                image_data += chunk
+
+            # Open the image with Pillow
+            img = Image.open(io.BytesIO(image_data))
+
+            # Convert to RGBA (adds opaque alpha channel)
+            rgba_img = img.convert('RGBA')
+
             # Ensure the output directory exists
             os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-            with open(output_path, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
+            # with open(output_path, 'wb') as f:
+            #     for chunk in r.iter_content(chunk_size=8192):
+            #         f.write(chunk)
+            # Save as PNG
+            rgba_img.save(output_path, 'PNG')
+            
         print(f"Image successfully saved to {output_path}")
         return True
     except requests.exceptions.RequestException as e:
@@ -409,7 +426,7 @@ def discogs_scrape_album_covers(albums_missing_art, album_cover_dir, already_tri
     for album_name, artist_name in albums_missing_art:
         if (not_found + download_error + retrieved) >= max_scrapes:
             break
-        save_file_path = os.path.join(album_cover_dir, album_name + '.jpg')
+        save_file_path = os.path.join(album_cover_dir, album_name + '.png')
         if album_name != 'Unknown Album' and save_file_path not in already_tried_covers : # if the album title is unknown, then we can't retrieve the art, now can we?
             release_id, status_code = get_release_id_by_artist_and_album(artist_name, album_name, discogs_token)
             if status_code > 0:
