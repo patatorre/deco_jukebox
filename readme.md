@@ -41,7 +41,7 @@ Step by step install on a Raspberry pi / pi OS / Ubuntu
 --------------------------------------
 1) Open a terminal window
 2) clone the github repo: "git clone https://github.com/patatorre/deco_jukebox.git". If git's not there, "sudo apt update", "sudo apt install git"
-3) Create a virtual environment. "cd deco_jukebox_master", "python3 -m venv venv". If python isn't installed go to python.org.
+3) Create a virtual environment. "cd deco_jukebox", "python3 -m venv venv". If python isn't installed go to python.org.
 4) Install packages. "source venv/bin/activate", to get the virtual environment going, then "pip install -r requirements.txt".
 5) Edit the .cfg file. "nano jukebox.cfg", then scroll down and change the line starting with music_root_folder=, put in your music folder, probably /home/admin/Music/. Ctrl-O to save, ctrl-X to exit
 6) Install the font manager "sudo apt install font-manager"
