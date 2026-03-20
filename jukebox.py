@@ -242,6 +242,10 @@ graphics_folder = os.path.join(app_folder, "graphics")
 album_art_folder = os.path.join(graphics_folder, 'album_covers')
 seek_album_art_filename = os.path.join(album_art_folder,'requests.txt')
 
+decor_folder = os.path.join(graphics_folder, "decor")
+frame_corner_file = os.path.join(decor_folder, "frame_corner_topleft.png")
+frame_segment_file = os.path.join(decor_folder, "frame_horz_line.png")
+
 labels_folder = os.path.join(graphics_folder, "labels")
 label_file1 = os.path.join(labels_folder, "vividred1-300x93.png")
 label_dimmed_file1 =  os.path.join(labels_folder, "vividred1_dimmed_300x93.png")
@@ -302,6 +306,9 @@ for label_file in label_dimmed_files:
     label_dimmed = pyglet.image.load(label_file)
     labels_dimmed.append(label_dimmed)
 label_highlight = pyglet.image.load(label_highlight_file)
+
+frame_corner = pyglet.image.load(frame_corner_file)
+frame_segment = pyglet.image.load(frame_segment_file)
 button_off = pyglet.image.load(button_off_file)
 button_on_epochs = pyglet.image.load(button_blue_file)
 button_on_genre = pyglet.image.load(button_green_file)
@@ -334,29 +341,6 @@ stop_button = pyglet.image.load(stop_button_file)
 
 definitions_folder = os.path.join(app_folder, "user_classifications")
 
-
-def add_alpha_channel(image):
-    """Convert an RGB image to RGBA with full opacity."""
-    image_data = image.get_image_data()
-
-    # Get RGB data
-    pitch = image_data.width * 3
-    rgb_data = image_data.get_data('RGB', pitch)
-
-    # Add alpha byte (255) to each pixel
-    rgba_data = bytearray()
-    for i in range(0, len(rgb_data), 3):
-        rgba_data.extend(rgb_data[i:i + 3])
-        rgba_data.append(255)
-
-    # Create new RGBA image
-    return pyglet.image.ImageData(
-        image.width,
-        image.height,
-        'RGBA',
-        bytes(rgba_data),
-        pitch=image.width * 4
-    )
 
 class MediaPlayer:
     def __init__(self, config):
@@ -2942,7 +2926,46 @@ glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
 buttons_font_stack, labels_font_stack = set_and_load_fonts(config, BUTTON_WIDTH, LABEL_WIDTH)
 
-# sprite1  = pyglet.sprite.Sprite(up_button_juiced, x=0, y=200)
+frame_batch = pyglet.graphics.Batch()
+frame_size_vertical = 300
+frame_size_horizontal = 800
+corner_size = 100
+frame_x_left = (window.width - frame_size_horizontal) // 2
+frame_x_right = (window.width + frame_size_horizontal) // 2
+frame_y_top = (window.height + frame_size_vertical) // 2
+frame_y_bot = (window.height - frame_size_vertical) // 2
+sprite_topleft  = pyglet.sprite.Sprite(frame_corner, x=frame_x_left - corner_size//2,
+                                       y=frame_y_top - corner_size//2, batch=frame_batch)
+sprite_topright  = pyglet.sprite.Sprite(frame_corner, x=frame_x_right - corner_size//2,
+                                       y=frame_y_top + corner_size//2, batch=frame_batch)
+sprite_botleft  = pyglet.sprite.Sprite(frame_corner, x=frame_x_left + corner_size//2,
+                                       y=frame_y_bot-corner_size//2, batch=frame_batch)
+sprite_botright  = pyglet.sprite.Sprite(frame_corner, x=frame_x_right + corner_size//2,
+                                       y=frame_y_bot+corner_size//2 , batch=frame_batch)
+
+frame_sprites = []
+frame_x = frame_x_left + corner_size//2
+while frame_x < (frame_x_right - corner_size):
+    frame_sprite = pyglet.sprite.Sprite(frame_segment, x=frame_x, y=frame_y_top-corner_size// 2, batch=frame_batch)
+    frame_sprites.append(frame_sprite)
+    frame_sprite2 = pyglet.sprite.Sprite(frame_segment, x=frame_x+corner_size, y=frame_y_bot + corner_size // 2, batch=frame_batch)
+    frame_sprite2.rotation = 180
+    frame_sprites.append(frame_sprite2)
+    frame_x += corner_size # frame cell size also
+
+frame_y = frame_y_bot + corner_size//2
+while frame_y < (frame_y_top - corner_size):
+    frame_sprite = pyglet.sprite.Sprite(frame_segment, x=frame_x_left+corner_size//2, y=frame_y, batch=frame_batch)
+    frame_sprite.rotation = 270
+    frame_sprites.append(frame_sprite)
+    frame_sprite2 = pyglet.sprite.Sprite(frame_segment, x=frame_x_right-corner_size//2, y=frame_y+corner_size, batch=frame_batch)
+    frame_sprite2.rotation = 90
+    frame_sprites.append(frame_sprite2)
+    frame_y += corner_size # frame cell size also
+
+sprite_topright.rotation = 90
+sprite_botright.rotation = 180
+sprite_botleft.rotation=270
 
 label1 = pyglet.text.Label('Loading music, please wait...',
                           font_name=buttons_font_stack,
@@ -2972,6 +2995,7 @@ def on_draw():
     # label1.x = (window.width - label1_width) // 2 + draw_its
     label1.draw()
     label2.draw()
+    frame_batch.draw()
     # sprite1.x = draw_its
     # if draw_its % 2 > 0:
     #     sprite1.image = up_button_juiced
