@@ -357,7 +357,7 @@ tube_corner_unlit_image3 = pyglet.image.load(tube_corner_unlit_file3)
 tube_corner_unlit_image4 = pyglet.image.load(tube_corner_unlit_file4)
 tube_corner_unlit_images = [tube_corner_unlit_image1, tube_corner_unlit_image2,
                             tube_corner_unlit_image3, tube_corner_unlit_image4]
-test_pattern_image = pyglet.image.load(test_pattern_file)
+#test_pattern_image = pyglet.image.load(test_pattern_file)
 
 button_off = pyglet.image.load(button_off_file)
 button_on_epochs = pyglet.image.load(button_blue_file)
