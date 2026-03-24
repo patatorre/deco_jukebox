@@ -58,7 +58,7 @@ else:
 from pyglet.gl import * # on a pi, the shadow_window = False must precede even this statement
 
 # display is customized only for the resolutions listed below
-resolutions = ['1600x900', '1920x1080', '1280x720']
+resolutions = ['1600x900', '1920x1080', '1280x720', '1280x800']
 resolutions_x = []
 resolutions_y = []
 for rez in resolutions:
@@ -83,6 +83,10 @@ if raspberrypi:
 
 screen_width = screen.width
 screen_height = screen.height
+
+# test rez
+# screen_width = 1280
+# screen_height = 800
 
 # find resolution in list
 
@@ -122,7 +126,7 @@ top_buttons_y = window_height - 50 #1030 or 850
 
 # selection buttons pane
 selection_buttons_panel_left = 0
-selection_buttons_panel_right = [window_width-320, window_width-320, window_width-320][rez_idx]
+selection_buttons_panel_right = window_width-320 #[window_width-320, window_width-320, window_width-320][rez_idx]
 selection_buttons_panel_top = 100
 selection_buttons_panel_bot = 0
 selection_button_spacing_horz = 116 #120
@@ -149,7 +153,7 @@ artists_panel_label_height = 50
 artists_panel_artist_max_length = 25  # Characters
 
 artists_panel_page_buttons_x = 0
-artists_panel_page_buttons_y = 128
+artists_panel_page_buttons_y = 140
 
 # Playlist panel
 playlist_panel_edge_left = window_width - 320 #1580
@@ -163,6 +167,22 @@ playing_highlight_y = window_height - 120 #952
 
 play_control_buttons_x = window_width - 320 #1550
 play_control_buttons_y = 80
+
+# Neon tube path
+# tube_waypoint_1 = (0, selection_buttons_panel_top+17)
+# tube_waypoint_2 = (artists_panel_edge_right - 2, selection_buttons_panel_top+17)
+# tube_waypoint_3 = (artists_panel_edge_right - 2, top_buttons_y + 27)
+# tube_waypoint_4 = (playlist_panel_edge_left-20, top_buttons_y + 27)
+# tube_waypoint_5 = (playlist_panel_edge_left-20, 0)
+# tube_corner_rotations = [180, 0, 90]
+
+tube_waypoint_1 = (artists_panel_edge_right - 2, selection_buttons_panel_top+51)
+tube_waypoint_2 = (artists_panel_edge_right - 2, top_buttons_y + 27)
+tube_waypoint_3 = (playlist_panel_edge_left-20, top_buttons_y + 27)
+tube_waypoint_4 = (playlist_panel_edge_left-20, selection_buttons_panel_top+51)
+tube_waypoint_5 = (artists_panel_edge_right - 2, selection_buttons_panel_top+51)
+tube_waypoint_is_corner = [False, True, True, True, True]
+tube_corner_rotations = [2, 0, 3, 2, 1] #[180, 0, 90, 180, 270]
 
 LABEL_MAX_LENGTH_ARTIST = 25 # chars
 LABEL_MAX_LENGTH_TITLE = 30
@@ -245,6 +265,16 @@ seek_album_art_filename = os.path.join(album_art_folder,'requests.txt')
 decor_folder = os.path.join(graphics_folder, "decor")
 frame_corner_file = os.path.join(decor_folder, "frame_corner_topleft.png")
 frame_segment_file = os.path.join(decor_folder, "frame_horz_line.png")
+tube_horz_unlit_file = os.path.join(decor_folder, "tube_horz_unlit.png")
+tube_horz_lit_file = os.path.join(decor_folder, "tube_horz_red.png")
+tube_vert_unlit_file = os.path.join(decor_folder, "tube_vert_unlit.png")
+tube_vert_lit_file = os.path.join(decor_folder, "tube_vert_red.png")
+tube_corner_lit_file = os.path.join(decor_folder, "tube_corner_red.png")
+tube_corner_unlit_file1 = os.path.join(decor_folder, "tube_corner_unlit_rot_0.png")
+tube_corner_unlit_file2 = os.path.join(decor_folder, "tube_corner_unlit_rot_90.png")
+tube_corner_unlit_file3 = os.path.join(decor_folder, "tube_corner_unlit_rot_180.png")
+tube_corner_unlit_file4 = os.path.join(decor_folder, "tube_corner_unlit_rot_270.png")
+test_pattern_file = os.path.join(decor_folder, "test_pattern.png")
 
 labels_folder = os.path.join(graphics_folder, "labels")
 label_file1 = os.path.join(labels_folder, "vividred1-300x93.png")
@@ -255,7 +285,9 @@ label_file3 = os.path.join(labels_folder, "green_300x93.png")
 label_dimmed_file3 =  os.path.join(labels_folder, "green_dimmed_300x93.png")
 label_files = [label_file1, label_file2, label_file3]
 label_dimmed_files = [label_dimmed_file1, label_dimmed_file2, label_dimmed_file3]
-label_highlight_file = os.path.join(labels_folder, "playing_frame_320x113.png")
+label_highlight_file1 = os.path.join(labels_folder, "playing_frame1.png")
+label_highlight_file2 = os.path.join(labels_folder, "playing_frame2.png")
+label_highlight_file3 = os.path.join(labels_folder, "playing_frame3.png")
 
 buttons_folder = os.path.join(graphics_folder, "buttons")
 button_off_file = os.path.join(buttons_folder, "button_grey_120x48.png")
@@ -297,6 +329,8 @@ back_button_lit_file = os.path.join(buttons_folder, "back_button_160x80.png")
 back_button_unlit_file = os.path.join(buttons_folder, "back_button_unlit_160x80.png")
 default_cover_image_file = os.path.join(album_art_folder, "default_cover_100x100.png")
 
+
+
 label_blanks = []
 labels_dimmed = []
 for label_file in label_files:
@@ -305,10 +339,26 @@ for label_file in label_files:
 for label_file in label_dimmed_files:
     label_dimmed = pyglet.image.load(label_file)
     labels_dimmed.append(label_dimmed)
-label_highlight = pyglet.image.load(label_highlight_file)
+label_highlight1 = pyglet.image.load(label_highlight_file1)
+label_highlight2 = pyglet.image.load(label_highlight_file2)
+label_highlight3 = pyglet.image.load(label_highlight_file3)
+label_highlights = [label_highlight1, label_highlight2, label_highlight3]
 
 frame_corner = pyglet.image.load(frame_corner_file)
 frame_segment = pyglet.image.load(frame_segment_file)
+tube_horz_lit_image = pyglet.image.load(tube_horz_lit_file)
+tube_horz_unlit_image = pyglet.image.load(tube_horz_unlit_file)
+tube_vert_lit_image = pyglet.image.load(tube_vert_lit_file)
+tube_vert_unlit_image = pyglet.image.load(tube_vert_unlit_file)
+tube_corner_lit_image = pyglet.image.load(tube_corner_lit_file)
+tube_corner_unlit_image1 = pyglet.image.load(tube_corner_unlit_file1)
+tube_corner_unlit_image2 = pyglet.image.load(tube_corner_unlit_file2)
+tube_corner_unlit_image3 = pyglet.image.load(tube_corner_unlit_file3)
+tube_corner_unlit_image4 = pyglet.image.load(tube_corner_unlit_file4)
+tube_corner_unlit_images = [tube_corner_unlit_image1, tube_corner_unlit_image2,
+                            tube_corner_unlit_image3, tube_corner_unlit_image4]
+test_pattern_image = pyglet.image.load(test_pattern_file)
+
 button_off = pyglet.image.load(button_off_file)
 button_on_epochs = pyglet.image.load(button_blue_file)
 button_on_genre = pyglet.image.load(button_green_file)
@@ -2106,6 +2156,243 @@ class ProgressBar:
 # end class ProgressBar
 
 
+class NeonTube:
+
+    is_lit = False
+    cell_size = 101
+    center_pixel = 51
+    lit_image_horz = tube_horz_lit_image
+    lit_image_vert = tube_vert_lit_image
+    lit_corner = tube_corner_lit_image
+    unlit_image_horz = tube_horz_unlit_image
+    unlit_image_vert = tube_vert_unlit_image
+    unlit_corners = tube_corner_unlit_images
+
+    # unlit_corner = test_pattern_image
+    # unlit_image_horz = test_pattern_image
+    # unlit_image_vert = test_pattern_image
+
+    # lit_image_horz.anchor_x = center_pixel
+    # lit_image_horz.anchor_y = center_pixel
+    # unlit_image_horz.anchor_x = center_pixel
+    # unlit_image_horz.anchor_y = center_pixel
+    # lit_image_vert.anchor_x = center_pixel
+    # lit_image_vert.anchor_y = center_pixel
+    # unlit_image_vert.anchor_x = center_pixel
+    # unlit_image_vert.anchor_y = center_pixel
+    # lit_corner.anchor_x = center_pixel
+    # lit_corner.anchor_y = center_pixel
+    # for unlit_corner in unlit_corners:
+    #     unlit_corner.anchor_x = center_pixel
+    #     unlit_corner.anchor_y = center_pixel
+
+    def __init__(self, waypoints, waypoint_is_corner, corner_rotations):
+        print(f'NeonTube.init() with waypoints: {waypoints}')
+        self.sprites_batch = pyglet.graphics.Batch()
+        self.corners_unlit_batch = pyglet.graphics.Batch()
+        self.corners_lit_batch = pyglet.graphics.Batch()
+        self.sprites = []
+        self.sprites_are_horz = []
+        self.corners = []
+        point_start = waypoints[0]
+        start_tube = False # Hack - should be true if the first segment is at an edge
+        n_pts = len(waypoints)
+        for pt_idx in range(1, n_pts):
+            point_end = waypoints[pt_idx]
+            #print(f'pt_idx = {pt_idx}')
+            x0, y0 = point_start
+            x1, y1 = point_end
+            x0 -= self.center_pixel
+            x1 -= self.center_pixel
+            y0 -= self.center_pixel
+            y1 -= self.center_pixel
+            delta_x = x1 - x0
+            delta_y = y1 - y0
+            start_segment = True
+
+            if abs(delta_x) > abs(delta_y): # let's say it's horizontal
+                is_horizontal = True # need this for last point
+                if delta_x > 0:
+                    inc_x = self.cell_size
+                else:
+                    inc_x = -1 * self.cell_size
+                this_x = x0
+
+                while abs(this_x - x1) > self.cell_size:
+                    if not start_tube:
+                        if start_segment:
+                            this_x += inc_x
+                            start_segment = False
+                    else:
+                        start_tube = False
+                        start_segment = False
+
+                    sprite = pyglet.sprite.Sprite(self.unlit_image_horz, x=this_x, y=y0,
+                                                  batch=self.sprites_batch)
+                    self.sprites.append(sprite)
+                    self.sprites_are_horz.append(True)
+                    this_x += inc_x
+
+                # last cell special case
+                scale_x = abs(this_x - x1) / self.cell_size
+                scaled_width = int(this_x - x1)
+                tweak_x = 0
+                # if scaled_width%2 > 0 and scaled_width > 0: # tweak if odd and going negative way
+                #     tweak_x = -1
+                print(f'Last seg horz: scaled_width={scaled_width}, this_x = {this_x}, tweak_x = {tweak_x}')
+                this_x += tweak_x
+                if scaled_width > 0:
+                    this_x += self.cell_size - scaled_width
+                sprite = pyglet.sprite.Sprite(self.unlit_image_horz, x=this_x, y=y0, batch=self.sprites_batch)
+                sprite.scale_x = scale_x
+
+                self.sprites.append(sprite)
+                self.sprites_are_horz.append(True)
+
+            else: # let's say it's vertical
+                is_horizontal = False
+                if delta_y > 0:
+                    inc_y = self.cell_size
+                else:
+                    inc_y = -1 * self.cell_size
+                this_y = y0
+                while abs(this_y - y1) > self.cell_size:
+                    if not start_tube:
+                        if start_segment:
+                            this_y += inc_y
+                            start_segment = False
+                    else:
+                        start_tube = False
+                        start_segment = False
+
+                    sprite = pyglet.sprite.Sprite(self.unlit_image_vert, x=x0, y=this_y, batch=self.sprites_batch)
+                    self.sprites.append(sprite)
+                    self.sprites_are_horz.append(False)
+                    this_y += inc_y
+
+                # last cell special case
+                scaled_width = int(this_y - y1)
+                scale_y = abs(scaled_width) / self.cell_size
+                tweak_y = 0
+                # if scaled_width%2 > 0: # tweak if odd
+                #     tweak_y = (inc_y > 0) - (inc_y < 0)
+
+                print(f'this_y = {this_y}, tweak_y = {tweak_y}')
+                this_y += tweak_y
+                if scaled_width > 0:
+                    this_y += self.cell_size - scaled_width
+                sprite = pyglet.sprite.Sprite(self.unlit_image_vert, x=x0, y=this_y, batch=self.sprites_batch)
+                sprite.scale_y = scale_y
+                #sprite.rotation = 90
+                self.sprites.append(sprite)
+                self.sprites_are_horz.append(False)
+
+            point_start = point_end
+
+        # last point special case
+
+        # if is_horizontal:
+        #     sprite = pyglet.sprite.Sprite(self.unlit_image_horz, x=x1, y=y1, batch=self.sprites_batch)
+        # else:
+        #     sprite = pyglet.sprite.Sprite(self.unlit_image_vert, x=x1, y=y1, batch=self.sprites_batch)
+        # self.sprites.append(sprite)
+        # self.sprites_are_horz.append(is_horizontal)
+
+        for idx, (sprite, is_horz) in enumerate(zip(self.sprites, self.sprites_are_horz)):
+            print(f'{idx}:({sprite.x}, {sprite.y}) scale_x:{sprite.scale_x},scale_y:{sprite.scale_y}, horz:{is_horz}')
+
+        # corners at all waypoints except ends
+        for waypoint, is_corner, rotation_idx in zip(waypoints, waypoint_is_corner, corner_rotations):
+            if is_corner:
+                x0, y0 = waypoint
+                # lit corners use the same image
+                sprite = pyglet.sprite.Sprite(self.lit_corner, x=x0, y=y0, batch=self.corners_lit_batch)
+                rotation = int(rotation_idx * 90)
+                sprite.rotation = rotation
+                # Rotate is wonky at pixel level
+                # also, sprites rotation is clockwise, stupidly
+                if rotation == 0:
+                    sprite.x = x0 - self.center_pixel
+                    sprite.y = y0 - self.center_pixel
+                    print(f'self.center_pixel = {self.center_pixel}, x0 = {x0}, sprite.x = {sprite.x}')
+                if rotation == 270:
+                    # sprite.scale_x = -1
+                    sprite.rotation = 90
+                    sprite.x = x0 - self.center_pixel + 1 - 1
+                    sprite.y = y0 +  self.center_pixel - 1
+                if rotation == 180:
+                    # sprite.scale_x = -1
+                    # sprite.scale_y = -1
+                    sprite.rotation = 180
+                    sprite.x = x0 + self.center_pixel - 1
+                    sprite.y = y0 + self.center_pixel - 1
+                if rotation == 90:
+                    sprite.rotation = 270
+                    sprite.x = x0 + self.center_pixel - 1
+                    sprite.y = y0 - self.center_pixel
+                self.corners.append(sprite)
+                print(f'rotation = {rotation}, sprite.rotation = {sprite.rotation}, scale_x = {sprite.scale_x}, scale_y = {sprite.scale_y}')
+                #unlit corners - no muss, each is customized
+                x0, y0 = waypoint
+                x0 -= self.center_pixel
+                y0 -= self.center_pixel
+                sprite = pyglet.sprite.Sprite(self.unlit_corners[rotation_idx], x=x0, y=y0, batch=self.corners_unlit_batch)
+                self.corners.append(sprite)
+
+    def draw(self):
+        self.sprites_batch.draw()
+        if self.is_lit:
+            self.corners_lit_batch.draw()
+        else:
+            self.corners_unlit_batch.draw()
+
+    def light_on(self):
+        for sprite, is_horz in zip(self.sprites, self.sprites_are_horz):
+            if is_horz:
+                sprite.image = self.lit_image_horz
+            else:
+                sprite.image = self.lit_image_vert
+
+        self.is_lit = True
+        # for sprite in self.corners:
+        #     sprite.image = self.lit_corner
+
+    def light_off(self):
+        for sprite, is_horz in zip(self.sprites, self.sprites_are_horz):
+            if is_horz:
+                sprite.image = self.unlit_image_horz
+            else:
+                sprite.image = self.unlit_image_vert
+        # for sprite in self.corners:
+        #     sprite.image = self.unlit_corner
+        self.is_lit = False
+
+
+class FrameHighlight:
+    frame_delay = 0.2 # seconds between frames
+
+    def __init__(self, frames, x, y):
+        self.n_frames = len(frames)
+        self.frames = frames
+        self.sprite_idx = 0
+        #self.count = 0
+        self.sprites = []
+        self.last_time = time.time()
+
+        for frame in frames:
+            sprite = pyglet.sprite.Sprite(img = frame, x=x, y=y)
+            self.sprites.append(sprite)
+
+    def draw(self):
+        self.sprites[self.sprite_idx].draw()
+        now = time.time()
+        if now - self.last_time > self.frame_delay:
+            self.last_time = now
+            self.sprite_idx += 1
+            if self.sprite_idx >= self.n_frames:
+                self.sprite_idx = 0
+
+
 def set_and_load_fonts(config, button_width, label_width):
 
     # see if config contains font names
@@ -2925,6 +3212,8 @@ glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
 buttons_font_stack, labels_font_stack = set_and_load_fonts(config, BUTTON_WIDTH, LABEL_WIDTH)
+#label_highlight_sprite = pyglet.sprite.Sprite(img=label_highlight, x=playing_highlight_x, y=playing_highlight_y)
+#label_highlight.blit(playing_highlight_x, playing_highlight_y)
 
 frame_batch = pyglet.graphics.Batch()
 frame_size_vertical = 300
@@ -3065,6 +3354,10 @@ spotify_panel.page_number = 0
 tracks_panel.update_visible_list()
 albums_panel.update_visible_list()
 singles_panel.update_visible_list()
+
+tube_waypoints = [tube_waypoint_1, tube_waypoint_2, tube_waypoint_3, tube_waypoint_4, tube_waypoint_5]
+neon_tube = NeonTube(tube_waypoints, tube_waypoint_is_corner, tube_corner_rotations)
+highlight_frame = FrameHighlight(label_highlights, playing_highlight_x, playing_highlight_y)
 
 @window.event
 def on_mouse_scroll(x, y, scroll_x, scroll_y):
@@ -3225,6 +3518,7 @@ def on_mouse_press(x, y, button, modifiers):
         if playlist_page_button_click == 3: # clear/stop pressed
             if play_control_buttons.playing: # stop, don't clear
                 play_control_buttons.playing = 0
+                neon_tube.light_off()
                 player.stop()
                 player.flush_queue()
                 # while not (player.source == None): # flush queue
@@ -3249,6 +3543,7 @@ def on_mouse_press(x, y, button, modifiers):
                     if not (play_control_buttons.playing): # start Play
                         print(f'len(player.playlist) = {len(player.playlist)}')
                         play_control_buttons.playing = 1
+                        neon_tube.light_on()
                         play_control_buttons.buttons[0]['active'] = 0 # turn 'play' button into 'pause' button
                         play_control_buttons.buttons[0]['juiced'] = 1
                         play_control_buttons.buttons[0]['juice_start_time'] = time.time()
@@ -3294,6 +3589,7 @@ def on_mouse_press(x, y, button, modifiers):
                                 play_control_buttons.buttons[0]['active'] = 1
                                 play_control_buttons.playing = 0
                                 playlist_page_buttons.buttons[2]['active'] = 1
+                                neon_tube.light_off()
                             else:  # cue up next song
                                 play_item = player.playlist[ze_playlist.topsong_index]
                                 print(f'on_draw() queuing up: {play_item["filepath"]}')
@@ -3362,12 +3658,15 @@ def on_mouse_press(x, y, button, modifiers):
 def on_draw():
     #global eos_flag, eos_time
     global player
+    global neon_tube
     window.clear()
+    neon_tube.draw()
     tab_buttons.draw_buttons()
     if tab_buttons.visible_panel == 'Tracks':
         tracks_panel.draw_labels()
     elif tab_buttons.visible_panel == 'Albums':
         albums_panel.draw()
+
     elif tab_buttons.visible_panel == 'Singles':
         singles_panel.draw_labels()
     elif tab_buttons.visible_panel == 'Spotify':
@@ -3378,7 +3677,9 @@ def on_draw():
     artists_page_buttons.draw_buttons()
     playlist_page_buttons.draw_buttons()
     if play_control_buttons.playing:
-        label_highlight.blit(playing_highlight_x, playing_highlight_y)
+        #label_highlight.blit(playing_highlight_x, playing_highlight_y)
+        #label_highlight_sprite.draw()
+        highlight_frame.draw()
         player.play_progress_bar.update_timer()
         player.play_progress_bar.draw()
         if player.is_track_done():
@@ -3390,6 +3691,7 @@ def on_draw():
                 play_control_buttons.buttons[0]['active'] = 1
                 play_control_buttons.playing = 0
                 playlist_page_buttons.buttons[2]['active'] = 1
+                neon_tube.light_off()
 
             else:  # cue up next song
                 play_item = player.playlist[ze_playlist.topsong_index]
