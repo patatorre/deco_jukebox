@@ -169,13 +169,6 @@ play_control_buttons_x = window_width - 320 #1550
 play_control_buttons_y = 80
 
 # Neon tube path
-# tube_waypoint_1 = (0, selection_buttons_panel_top+17)
-# tube_waypoint_2 = (artists_panel_edge_right - 2, selection_buttons_panel_top+17)
-# tube_waypoint_3 = (artists_panel_edge_right - 2, top_buttons_y + 27)
-# tube_waypoint_4 = (playlist_panel_edge_left-20, top_buttons_y + 27)
-# tube_waypoint_5 = (playlist_panel_edge_left-20, 0)
-# tube_corner_rotations = [180, 0, 90]
-
 tube_waypoint_1 = (artists_panel_edge_right - 2, selection_buttons_panel_top+51)
 tube_waypoint_2 = (artists_panel_edge_right - 2, top_buttons_y + 27)
 tube_waypoint_3 = (playlist_panel_edge_left-20, top_buttons_y + 27)
@@ -183,6 +176,12 @@ tube_waypoint_4 = (playlist_panel_edge_left-20, selection_buttons_panel_top+51)
 tube_waypoint_5 = (artists_panel_edge_right - 2, selection_buttons_panel_top+51)
 tube_waypoint_is_corner = [False, True, True, True, True]
 tube_corner_rotations = [2, 0, 3, 2, 1] #[180, 0, 90, 180, 270]
+
+# grille
+grille_top = selection_buttons_panel_top #+10
+grille_bot = selection_buttons_panel_bot
+grille_left = selection_buttons_panel_left
+grille_right = selection_buttons_panel_right
 
 LABEL_MAX_LENGTH_ARTIST = 25 # chars
 LABEL_MAX_LENGTH_TITLE = 30
@@ -274,7 +273,10 @@ tube_corner_unlit_file1 = os.path.join(decor_folder, "tube_corner_unlit_rot_0.pn
 tube_corner_unlit_file2 = os.path.join(decor_folder, "tube_corner_unlit_rot_90.png")
 tube_corner_unlit_file3 = os.path.join(decor_folder, "tube_corner_unlit_rot_180.png")
 tube_corner_unlit_file4 = os.path.join(decor_folder, "tube_corner_unlit_rot_270.png")
-test_pattern_file = os.path.join(decor_folder, "test_pattern.png")
+grid_pattern_file = os.path.join(decor_folder, "grille.png")
+grid_pattern_file2 = os.path.join(decor_folder, "grille300x234.png")
+grid_pattern_file3 = os.path.join(decor_folder, "grille320x234.png")
+bar_file = os.path.join(decor_folder, "bar10x128.png")
 
 labels_folder = os.path.join(graphics_folder, "labels")
 label_file1 = os.path.join(labels_folder, "vividred1-300x93.png")
@@ -357,7 +359,14 @@ tube_corner_unlit_image3 = pyglet.image.load(tube_corner_unlit_file3)
 tube_corner_unlit_image4 = pyglet.image.load(tube_corner_unlit_file4)
 tube_corner_unlit_images = [tube_corner_unlit_image1, tube_corner_unlit_image2,
                             tube_corner_unlit_image3, tube_corner_unlit_image4]
-#test_pattern_image = pyglet.image.load(test_pattern_file)
+grid_image = pyglet.image.load(grid_pattern_file)
+grid_image2 = pyglet.image.load(grid_pattern_file2)
+grid_image3 = pyglet.image.load(grid_pattern_file3)
+bar_image = pyglet.image.load(bar_file)
+# print(f'Grille image width = {grid_image.width} height = {grid_image.height}')
+# print(f'Grille clip width = {(grille_right-grille_left)} height = {(grille_top-grille_bot)}')
+#grid_clipped_image = grid_image.get_region(x=grille_left, y=grille_top, width = (grille_right-grille_left),
+#                                           height=(grille_top-grille_bot))
 
 button_off = pyglet.image.load(button_off_file)
 button_on_epochs = pyglet.image.load(button_blue_file)
@@ -577,6 +586,18 @@ class ButtonPanel:
         self.genre_button_sprites = []
         self.epoch_button_sprites = []
 
+        # Background image
+        self.background_sprite = pyglet.sprite.Sprite(img=grid_image, x=grille_left, y=grille_bot)
+        # self.bar_batch = pyglet.graphics.Batch()
+        # self.bar_sprites = []
+        #
+        # xpos = grille_left
+        # bar_width = bar_image.width
+        # while xpos < grille_right:
+        #     sprite = pyglet.sprite.Sprite(img=bar_image, x=xpos, y=grille_top, batch=self.bar_batch)
+        #     self.bar_sprites.append(sprite)
+        #     xpos += bar_width
+
         # make a list of all possible years for the 'Other' option comparison
         for epoch in self.epochs_list:
             # print(epoch)
@@ -634,6 +655,9 @@ class ButtonPanel:
         self.epoch_buttons[0]['flag'] = 1
 
     def draw_buttons(self):
+
+        self.background_sprite.draw()
+        # self.bar_batch.draw()
 
         # update sprite images lit / not lit
         for epoch_button, epoch_sprite in zip (self.epoch_buttons, self.epoch_button_sprites):
@@ -1576,7 +1600,17 @@ class ArtistsPanel:
         #self.visible_list = []
         self.artists_list = []
         self.artists_selected = [1] # first item in this list is dummy artist 'All'
-        #self.all_selected = 1 # maybe this is redundant
+        self.grid_batch = pyglet.graphics.Batch()
+        self.grid_sprites = []
+
+        ypos = grid_image.height
+        grille_height = grid_image2.height
+        while ypos < window_height:
+            sprite = pyglet.sprite.Sprite(img=grid_image2, x=0, y=ypos, batch=self.grid_batch)
+            self.grid_sprites.append(sprite)
+            sprite = pyglet.sprite.Sprite(img=grid_image3, x=playlist_panel_edge_left, y=ypos, batch=self.grid_batch)
+            self.grid_sprites.append(sprite)
+            ypos += grille_height
 
         # create empty labels for later use
         x_label = self.edge_left
@@ -1655,6 +1689,7 @@ class ArtistsPanel:
 
 
     def draw_labels(self):
+        self.grid_batch.draw()
         n_artists = len(self.artists_list)
         for label_entry in self.visible_list:
             x_label = label_entry['x_label']
@@ -3660,6 +3695,7 @@ def on_draw():
     global player
     global neon_tube
     window.clear()
+    artist_list.draw_labels()
     neon_tube.draw()
     tab_buttons.draw_buttons()
     if tab_buttons.visible_panel == 'Tracks':
@@ -3699,7 +3735,7 @@ def on_draw():
                 player.play_media(play_item)
             ze_playlist.update_visible_list(0,0)
     ze_playlist.draw_labels()
-    artist_list.draw_labels()
+
 
 
 pyglet.app.run()
