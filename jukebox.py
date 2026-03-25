@@ -276,7 +276,7 @@ tube_corner_unlit_file4 = os.path.join(decor_folder, "tube_corner_unlit_rot_270.
 grid_pattern_file = os.path.join(decor_folder, "grille.png")
 grid_pattern_file2 = os.path.join(decor_folder, "grille300x234.png")
 grid_pattern_file3 = os.path.join(decor_folder, "grille320x234.png")
-bar_file = os.path.join(decor_folder, "bar10x128.png")
+#bar_file = os.path.join(decor_folder, "bar10x128.png")
 
 labels_folder = os.path.join(graphics_folder, "labels")
 label_file1 = os.path.join(labels_folder, "vividred1-300x93.png")
@@ -362,7 +362,7 @@ tube_corner_unlit_images = [tube_corner_unlit_image1, tube_corner_unlit_image2,
 grid_image = pyglet.image.load(grid_pattern_file)
 grid_image2 = pyglet.image.load(grid_pattern_file2)
 grid_image3 = pyglet.image.load(grid_pattern_file3)
-bar_image = pyglet.image.load(bar_file)
+#bar_image = pyglet.image.load(bar_file)
 # print(f'Grille image width = {grid_image.width} height = {grid_image.height}')
 # print(f'Grille clip width = {(grille_right-grille_left)} height = {(grille_top-grille_bot)}')
 #grid_clipped_image = grid_image.get_region(x=grille_left, y=grille_top, width = (grille_right-grille_left),
