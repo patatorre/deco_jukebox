@@ -50,6 +50,20 @@ Step by step install on a Raspberry pi / pi OS / Ubuntu
 9) Install vlc? "sudo apt install vlc". I actually didn't have to do this on my pi OS. 
 10) Run jukebox "python3 jukebox.py". Note that you'll have to activate the virtual environment every time you want to run it. Figure out how to script it.
 
+Step by step install on Windows
+-------------------------------
+1) Download the project .zip from https://github.com/patatorre/deco_jukebox and extract the files.
+2) Install Python if you haven't got it already. Click-check "Add python.exe to PATH" during installation. Reboot.
+3) Create a virtual environment: in a CMD window, navigate to the project folder, and "python -m venv venv"
+4) Activate the virtual environment. Still in that CMD window, type "venv/Scripts/activate.bat"
+5) Install the packages. Do "pip install XXX", where XXX is pyglet, python-vlc, unidecode, mutagen, requests, pillow. You can check the list in requests.txt, but for some reason the Pillow version listed didn't install under Windows 11 on my test machine. Whereas "pip install pillow" worked.
+6) Install VLC (64 bits, apparently this needs to match whatever you're using for Python) from https://www.videolan.org/vlc/.
+7) Add the VLC application directory to "path" in the environmental variables. Path is probably "C:\Program Files\videolan\vlc". Reboot. This is because python-vlc uses a dll in there.
+8) Download and install the "Lavoir" font from: https://fontlibrary.org/en/font/lavoir (there'll be a lot of trash "download" buttons, the correct one is the brownish button top right).
+9) Edit "jukebox.cfg", change the line starting with "music_root_folder=" and change the path that follows so it points to your music library, probably C:\Users\[yourname]\Music.
+10) Now you're ready to run it. In a CMD window, activate the venv again (see 3) and then "python jukebox.py"
+
+
 ![Tracks_panel.png](screenshots/Tracks_panel.png)
 
 ![Albums_panel.png](screenshots/Albums_panel.png)
@@ -57,3 +71,5 @@ Step by step install on a Raspberry pi / pi OS / Ubuntu
 ![Album_open_panel.png](screenshots/Album_open_panel.png)
 
 ![Singles_panel.png](screenshots/Singles_panel.png)
+
+![loading_screen.png](screenshots/loading_screen.png)

@@ -2404,15 +2404,16 @@ class NeonTube:
 
 
 class FrameHighlight:
-    frame_delay = 0.2 # seconds between frames
+    # frame_delay = 0.2 # seconds between frames
+    count_delay = 4
 
     def __init__(self, frames, x, y):
         self.n_frames = len(frames)
         self.frames = frames
         self.sprite_idx = 0
-        #self.count = 0
+        self.count = 0
         self.sprites = []
-        self.last_time = time.time()
+        #self.last_time = time.time()
 
         for frame in frames:
             sprite = pyglet.sprite.Sprite(img = frame, x=x, y=y)
@@ -2420,9 +2421,12 @@ class FrameHighlight:
 
     def draw(self):
         self.sprites[self.sprite_idx].draw()
-        now = time.time()
-        if now - self.last_time > self.frame_delay:
-            self.last_time = now
+        self.count += 1
+        # now = time.time()
+        # if now - self.last_time > self.frame_delay:
+        if self.count > self.count_delay:
+            #self.last_time = now
+            self.count = 0
             self.sprite_idx += 1
             if self.sprite_idx >= self.n_frames:
                 self.sprite_idx = 0
