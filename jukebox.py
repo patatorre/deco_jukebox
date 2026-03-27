@@ -3,7 +3,7 @@
 #
 # A touchscreen jukebox in Python
 # by Patrick Dumais, patatorre "at" proton.me
-# Version 0.7
+# Version 0.8
 # March 2026
 #
 # sudo buy me a coffee:
@@ -156,14 +156,14 @@ artists_panel_page_buttons_x = 0
 artists_panel_page_buttons_y = 140
 
 # Playlist panel
-playlist_panel_edge_left = window_width - 320 #1580
+playlist_panel_edge_left = window_width - 313 #1580
 playlist_panel_edge_right = window_width # 1920
 playlist_panel_edge_top = window_height - 10 #1070
 playlist_panel_edge_bot = 190
 playlist_panel_label_width = 300
 playlist_panel_label_height = 93
-playing_highlight_x = window_width - 330
-playing_highlight_y = window_height - 120 #952
+playing_highlight_x = window_width - 323
+playing_highlight_y = playlist_panel_edge_top - 103 #952
 
 play_control_buttons_x = window_width - 320 #1550
 play_control_buttons_y = 80
@@ -171,8 +171,8 @@ play_control_buttons_y = 80
 # Neon tube path
 tube_waypoint_1 = (artists_panel_edge_right - 2, selection_buttons_panel_top+51)
 tube_waypoint_2 = (artists_panel_edge_right - 2, top_buttons_y + 27)
-tube_waypoint_3 = (playlist_panel_edge_left-20, top_buttons_y + 27)
-tube_waypoint_4 = (playlist_panel_edge_left-20, selection_buttons_panel_top+51)
+tube_waypoint_3 = (playlist_panel_edge_left-27, top_buttons_y + 27)
+tube_waypoint_4 = (playlist_panel_edge_left-27, selection_buttons_panel_top+51)
 tube_waypoint_5 = (artists_panel_edge_right - 2, selection_buttons_panel_top+51)
 tube_waypoint_is_corner = [False, True, True, True, True]
 tube_corner_rotations = [2, 0, 3, 2, 1] #[180, 0, 90, 180, 270]
@@ -1777,11 +1777,12 @@ class ArtistsPanel:
 class PlayList:
     edge_left = playlist_panel_edge_left
     edge_right = playlist_panel_edge_right
-    edge_top = playlist_panel_edge_top
+    edge_top = playlist_panel_edge_top # affects the position of the topmost label
     edge_bot = playlist_panel_edge_bot
     label_width = playlist_panel_label_width
     label_height = playlist_panel_label_height
-    headspace = 20  # extra space for the first item
+
+    headspace = 30  # extra space for the first item (space for progress bar)
     juice_duration = 0.2 # seconds
 
     def __init__(self, playlist_at_startup, labels_font_stack):
@@ -1802,7 +1803,7 @@ class PlayList:
 
         # make a fixed set of labels
         x_label = self.edge_left
-        y_label = self.edge_top - playlist_panel_label_height - 8
+        y_label = self.edge_top - playlist_panel_label_height #- 8
         vert_count = 0
         for idx in range(self.n_labels_horz * self.n_labels_vert):
 
@@ -2333,8 +2334,8 @@ class NeonTube:
         # self.sprites.append(sprite)
         # self.sprites_are_horz.append(is_horizontal)
 
-        for idx, (sprite, is_horz) in enumerate(zip(self.sprites, self.sprites_are_horz)):
-            print(f'{idx}:({sprite.x}, {sprite.y}) scale_x:{sprite.scale_x},scale_y:{sprite.scale_y}, horz:{is_horz}')
+        # for idx, (sprite, is_horz) in enumerate(zip(self.sprites, self.sprites_are_horz)):
+        #     print(f'{idx}:({sprite.x}, {sprite.y}) scale_x:{sprite.scale_x},scale_y:{sprite.scale_y}, horz:{is_horz}')
 
         # corners at all waypoints except ends
         for waypoint, is_corner, rotation_idx in zip(waypoints, waypoint_is_corner, corner_rotations):
@@ -2349,7 +2350,7 @@ class NeonTube:
                 if rotation == 0:
                     sprite.x = x0 - self.center_pixel
                     sprite.y = y0 - self.center_pixel
-                    print(f'self.center_pixel = {self.center_pixel}, x0 = {x0}, sprite.x = {sprite.x}')
+                    # print(f'self.center_pixel = {self.center_pixel}, x0 = {x0}, sprite.x = {sprite.x}')
                 if rotation == 270:
                     # sprite.scale_x = -1
                     sprite.rotation = 90
@@ -2366,7 +2367,7 @@ class NeonTube:
                     sprite.x = x0 + self.center_pixel - 1
                     sprite.y = y0 - self.center_pixel
                 self.corners.append(sprite)
-                print(f'rotation = {rotation}, sprite.rotation = {sprite.rotation}, scale_x = {sprite.scale_x}, scale_y = {sprite.scale_y}')
+                # print(f'rotation = {rotation}, sprite.rotation = {sprite.rotation}, scale_x = {sprite.scale_x}, scale_y = {sprite.scale_y}')
                 #unlit corners - no muss, each is customized
                 x0, y0 = waypoint
                 x0 -= self.center_pixel

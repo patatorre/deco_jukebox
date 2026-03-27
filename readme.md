@@ -73,3 +73,5 @@ Step by step install on Windows
 ![Singles_panel.png](screenshots/Singles_panel.png)
 
 ![loading_screen.png](screenshots/loading_screen.png)
+
+![juke.gif](screenshots/juke.gif)
