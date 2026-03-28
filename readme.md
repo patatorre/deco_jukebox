@@ -54,8 +54,8 @@ Step by step install on Windows
 -------------------------------
 1) Download the project .zip from https://github.com/patatorre/deco_jukebox and extract the files.
 2) Install Python if you haven't got it already. Click-check "Add python.exe to PATH" during installation. Reboot.
-3) Create a virtual environment: in a CMD window, navigate to the project folder, and "python -m venv venv"
-4) Activate the virtual environment. Still in that CMD window, type "venv/Scripts/activate.bat"
+3) Create a virtual environment: in a CMD window (NOT powershell), navigate to the project folder, and "python -m venv venv"
+4) Activate the virtual environment. Still in that CMD window, type "venv/Scripts/activate.bat", no quotes.
 5) Install the packages. Do "pip install XXX", where XXX is pyglet, python-vlc, unidecode, mutagen, requests, pillow. You can check the list in requests.txt, but for some reason the Pillow version listed didn't install under Windows 11 on my test machine. Whereas "pip install pillow" worked.
 6) Install VLC (64 bits, apparently this needs to match whatever you're using for Python) from https://www.videolan.org/vlc/.
 7) Add the VLC application directory to "path" in the environmental variables. Path is probably "C:\Program Files\videolan\vlc". Reboot. This is because python-vlc uses a dll in there.

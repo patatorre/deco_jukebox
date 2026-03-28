@@ -2406,7 +2406,7 @@ class NeonTube:
 
 class FrameHighlight:
     # frame_delay = 0.2 # seconds between frames
-    count_delay = 4
+    count_delay = 0
 
     def __init__(self, frames, x, y):
         self.n_frames = len(frames)
@@ -3246,7 +3246,6 @@ eos_time = time.time()
 
 window = pyglet.window.Window(width=window_width, height=window_height, fullscreen=False,
                               style=pyglet.window.Window.WINDOW_STYLE_BORDERLESS, config=pyg_config)
-
 #window.switch_to()
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -3398,6 +3397,8 @@ singles_panel.update_visible_list()
 tube_waypoints = [tube_waypoint_1, tube_waypoint_2, tube_waypoint_3, tube_waypoint_4, tube_waypoint_5]
 neon_tube = NeonTube(tube_waypoints, tube_waypoint_is_corner, tube_corner_rotations)
 highlight_frame = FrameHighlight(label_highlights, playing_highlight_x, playing_highlight_y)
+frame_count = 0
+frame_count_start = time.time()
 
 @window.event
 def on_mouse_scroll(x, y, scroll_x, scroll_y):
@@ -3699,6 +3700,8 @@ def on_draw():
     #global eos_flag, eos_time
     global player
     global neon_tube
+    # global frame_count
+    # global frame_count_start
     window.clear()
     artist_list.draw_labels()
     neon_tube.draw()
@@ -3740,7 +3743,14 @@ def on_draw():
                 player.play_media(play_item)
             ze_playlist.update_visible_list(0,0)
     ze_playlist.draw_labels()
+    # frame_count += 1
+    # if frame_count > 100:
+    #     now = time.time()
+    #     delta_time = now - frame_count_start
+    #     fps = frame_count / delta_time
+    #     print(f'{fps:.1f} fps')
+    #     frame_count = 0
+    #     frame_count_start = now
 
 
-
-pyglet.app.run()
+pyglet.app.run(interval=0.2) # 0.2 <=> run at 5 fps, which should allow cpu to not max out -- adjust as necessary
