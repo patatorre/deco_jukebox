@@ -3,7 +3,7 @@
 #
 # A touchscreen jukebox in Python
 # by Patrick Dumais, patatorre "at" proton.me
-# Version 0.8
+# Version 0.85
 # March 2026
 #
 # sudo buy me a coffee:
