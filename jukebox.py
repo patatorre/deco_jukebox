@@ -1457,10 +1457,10 @@ class AlbumPanel:
         # this_cover_image = get_album_art(this_album, self.big_album_cover_size)
         # this_cover_image.blit(self.edge_left, self.edge_top - self.big_album_cover_size)
         #self.big_album_cover_image.blit(self.big_album_image_x, self.big_album_image_y)
-        this_cover_texture, scale_x, scale_y = get_album_art(this_album, self.big_album_cover_size)
-        self.big_album_cover_sprite.image = this_cover_texture
-        self.big_album_cover_sprite.scale_x = scale_x
-        self.big_album_cover_sprite.scale_y = scale_y
+        # this_cover_texture, scale_x, scale_y = get_album_art(this_album, self.big_album_cover_size) # NO !! memory problems
+        # self.big_album_cover_sprite.image = this_cover_texture
+        # self.big_album_cover_sprite.scale_x = scale_x
+        # self.big_album_cover_sprite.scale_y = scale_y
         self.big_album_cover_sprite.draw()
         self.big_album_label.text = this_album
         self.big_album_label.draw()
@@ -1559,7 +1559,12 @@ class AlbumPanel:
                 self.album_open = 1
                 self.page_number = 0
                 self.open_album_entry = clicked_album
-                self.big_album_cover_image = get_album_art(clicked_album['album'], self.big_album_cover_size)
+                this_cover_texture, scale_x, scale_y = get_album_art(clicked_album['album'], self.big_album_cover_size)
+                # this_cover_texture, scale_x, scale_y = get_album_art(this_album,
+                #                                                      self.big_album_cover_size)  # NO !! memory problems
+                self.big_album_cover_sprite.image = this_cover_texture
+                self.big_album_cover_sprite.scale_x = scale_x
+                self.big_album_cover_sprite.scale_y = scale_y
                 # add album songs to local list
                 self.songlist = []
                 for song_label in song_labels:
