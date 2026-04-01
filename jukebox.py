@@ -2735,8 +2735,6 @@ def import_music(start_folders, map_artists_to_genre, map_albums_to_genre, map_c
                 all_music.append(music_record)
                 n_read += 1
 
-            n_visited += 1
-
             if n_visited % 100 == 0:
                 # pump events (untested)
                 pyglet.clock.tick()
@@ -2744,6 +2742,8 @@ def import_music(start_folders, map_artists_to_genre, map_albums_to_genre, map_c
                 window.dispatch_events()
                 window.dispatch_event('on_draw')
                 window.flip()
+
+            n_visited += 1
 
         list_idx += 1
 
