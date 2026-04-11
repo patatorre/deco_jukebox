@@ -29,7 +29,7 @@ Windows / Linux:
 Deco Jukebox works in both. Note Windows and Linux paths use different slashes ("\" vs "/" respectively).
 
 Raspberry pi:
-Works on a Raspberry pi 5 running either Raspberry OS or Ubuntu. The only weird difference is that the album cover art png's MUST have with RGBA channels. The scraper does take care of that, but if you're supplementing the album cover art yourself, you have to add an alpha channel to the image or the jukebox will crash.
+Works on a Raspberry pi 5 running either Raspberry OS or Ubuntu. The only weird difference is that the album cover art png's MUST have RGBA channels. The scraper does take care of that, but if you're supplementing the album cover art yourself, you have to add an alpha channel to the image or the jukebox will crash.
 
 If you enjoy this project, consider buying me a coffee.
 
