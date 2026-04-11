@@ -359,7 +359,7 @@ def get_unarted_albums_list(music_root_folder, album_cover_dir):
                 title, artist, album, year, genre, duration_s, error_flag = get_tune_metadata(music_file)
                 if album == 'Unknown Album':
                     pass # tbd
-                album_art_path = os.path.join(album_cover_dir, album + '.jpg')
+                album_art_path = os.path.join(album_cover_dir, album + '.png')
                 if not os.path.isfile(album_art_path):
                     print(f'Missing art file for {album} by {artist}')
                     albums.append((album, artist))
