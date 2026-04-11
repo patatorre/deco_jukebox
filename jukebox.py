@@ -127,8 +127,8 @@ top_buttons_y = window_height - 50 #1030 or 850
 # selection buttons pane
 selection_buttons_panel_left = 0
 selection_buttons_panel_right = window_width-320 #[window_width-320, window_width-320, window_width-320][rez_idx]
-selection_buttons_panel_top = 100
-selection_buttons_panel_bot = 0
+selection_buttons_panel_top = 105
+selection_buttons_panel_bot = 5
 selection_button_spacing_horz = 116 #120
 selection_button_spacing_vert = 50
 
