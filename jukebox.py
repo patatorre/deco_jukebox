@@ -3131,7 +3131,8 @@ def find_album_songs_deprecated(dir_path, artist):
 
 def get_album_art(album_title, new_width):
     cover_art = None
-    path = os.path.join(album_art_folder, album_title + '.png')
+    album_title_sani = sanitize_decolonize(album_title)
+    path = os.path.join(album_art_folder, album_title_sani + '.png')
     new_height = new_width
     try:
         cover_art_image =pyglet.image.load(path)
@@ -3178,6 +3179,12 @@ def sanitize_dequote(ze_string):
     sanitized_string = ze_string.replace('"', '\\"')
     return(sanitized_string)
 
+# Replace colons and questions marks in filename (album cover art file, undoubtedly)
+def sanitize_decolonize(ze_string):
+    sanitized_string = ze_string.replace(':', '_')
+    sanitized_string = sanitized_string.replace('?', '_')
+    #sanitized_string = sanitized_string.replace('"', '\\"')
+    return(sanitized_string)
 
 # write out track recorded in audacity with the appropriate metadata
 def export_track(playlist_item):

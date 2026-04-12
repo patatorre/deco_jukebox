@@ -367,6 +367,13 @@ def get_unarted_albums_list(music_root_folder, album_cover_dir):
                 pass
     return(albums)
 
+# replace colons and whatnot in filenames by underscores
+def sanitize_decolonize(ze_string):
+    sanitized_string = ze_string.replace(':', '_')
+    sanitized_string = sanitized_string.replace('?', '_')
+    #sanitized_string = sanitized_string.replace('"', '\\"')
+    return(sanitized_string)
+
 
 def download_cover_image(image_url, output_path):
     """
@@ -426,7 +433,7 @@ def discogs_scrape_album_covers(albums_missing_art, album_cover_dir, already_tri
     for album_name, artist_name in albums_missing_art:
         if (not_found + download_error + retrieved) >= max_scrapes:
             break
-        save_file_path = os.path.join(album_cover_dir, album_name + '.png')
+        save_file_path = os.path.join(album_cover_dir, sanitize_decolonize(album_name) + '.png')
         if album_name != 'Unknown Album' and save_file_path not in already_tried_covers : # if the album title is unknown, then we can't retrieve the art, now can we?
             release_id, status_code = get_release_id_by_artist_and_album(artist_name, album_name, discogs_token)
             if status_code > 0:
