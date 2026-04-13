@@ -1,4 +1,14 @@
-# Force some changes on some music files
+# Brute-force change mp3 / m4a metadata
+#
+# How to use:
+# 1) Change the target directory in line 144/145, run once to see if it is correct
+# 2) un-comment lines 171-177 (m4a) or 192-197 (mp3) to reflect the changes you're trying to make
+# 3) don't forget the audiofile.save() line
+# 4) run again
+# 5) re-comment everything you un-commented, for safety
+#
+# Patrick Dumais, Jan-Apr 2026
+
 
 from unidecode import unidecode
 import os
