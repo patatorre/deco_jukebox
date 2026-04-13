@@ -134,78 +134,54 @@ def import_music(start_folders):
     return(all_paths)
 
 
+if __name__ == '__main__':
+    #target_album_path_list = ["/home/patrick/Music/spotify_tracks/Joe Hisaishi/"]
+    target_album_path_list = ["/home/patrick/Music/iTunes/iTunes Media/Music/Donna Summer/"]
+    album_music = import_music(target_album_path_list)
+    print(album_music)
+    #album_music = ["/home/patrick/Music/iTunes/iTunes Media/Music/Foreigner/Agent Provocateur/"]
+    for music_file in album_music:
+        #print(music_file)
+        audiotype = music_file[-3:]
+        audiofile = mutagen.File(music_file)
+        keys = audiofile.keys()
+        print(keys)
+        if audiotype == 'm4a':
+            try:
+                print('m4a nam', audiofile['©nam'])
+                print('m4a alb', audiofile['©alb'])
+                print('m4a gen', audiofile['\xa9gen'])
+                print('m4a ART', audiofile["©ART"])
+                print('m4a ©wrt', audiofile["©wrt"])
+                print('m4a day', audiofile['©day'])
 
-# test_file = "/home/patrick/Music/iTunes/iTunes Media/Music/The Dust Brothers/Fight Club/08 - Dust Brothers - Medula Oblongat.mp3"
-# #test_file = "/home/patrick/Music/iTunes/iTunes Media/Music/Artistes variés/Les temps des fêtes chez nous_ Jour de l/03 Le rapide blanc.m4a"
-# audiofile = mutagen.File(test_file)
-# keys = audiofile.keys()
-#
-# for key in keys:
-#     if not key == 'covr':
-#         print(key, audiofile[key])
+            except:
+                pass
 
-
-
-#target_album_path_list = ["/home/patrick/Music/spotify_tracks/Pink Floyd/"]
-target_album_path_list = ["/home/patrick/Music/iTunes/iTunes Media/Music/The Clash/"]
-album_music = import_music(target_album_path_list)
-print(album_music)
-#album_music = ["/home/patrick/Music/iTunes/iTunes Media/Music/Foreigner/Agent Provocateur/"]
-for music_file in album_music:
-    #print(music_file)
-    audiotype = music_file[-3:]
-    audiofile = mutagen.File(music_file)
-    keys = audiofile.keys()
-    print(keys)
-    if audiotype == 'm4a':
-        try:
-            print('m4a nam', audiofile['©nam'])
-            print('m4a alb', audiofile['©alb'])
-            print('m4a gen', audiofile['\xa9gen'])
-            print('m4a ART', audiofile["©ART"])
-            print('m4a ©wrt', audiofile["©wrt"])
-            print('m4a day', audiofile['©day'])
-            # print('m4a covr', audiofile['covr']) # non-existent in the files I looked at
-
-        except:
-            pass
-            # audiofile['©day'] = ['2007']
+            # audiofile['©day'] = ['1963']
+            # audiofile["©ART"] = ['Vivaldi, Antonio']
+            # audiofile['©alb'] = ['Hungry Ghosts']
+            # audiofile['\xa9gen'] = ['francophone']
             # audiofile.save()
 
-        # audiofile['©day'] = ['2004']
-        # audiofile["©ART"] = ['Vivaldi, Antonio']
-        # audiofile['©alb'] = ['Beethoven: Piano Sonatas 1 - Hammerklavier']
-        # audiofile['\xa9gen'] = ['francophone']
-        # audiofile.save()
+        if audiotype == 'mp3':
+            try:
+                print('TPE1:', audiofile['TPE1']) # Artist
+                print('TIT2:', audiofile['TIT2'])
+                print('TALB:', audiofile['TALB'])
+                print('TCON:',audiofile['TCON'])
+                print('TDRC:',audiofile['TDRC'])
 
-    if audiotype == 'mp3':
-        try:
-            print('TPE1:', audiofile['TPE1']) # Artist
-            print('TCON:',audiofile['TCON'])
-            print('TDRC:',audiofile['TDRC'])
-            print('TIT2:',audiofile['TIT2'])
-            print('TALB:', audiofile['TALB'])
-        except:
-            trunc_path = music_file[:-4] # remove type from filename
-            split_string = trunc_path.split('/')
-            n_words = len(split_string)
-            last_word = split_string[n_words-1]
-            print(f'filename:{last_word}')
-            # audiofile['TIT2'] = mutagen.id3.TIT2(encoding=3, text=last_word)
-            # audiofile['TDRC'] = mutagen.id3.TDRC(encoding=3, text="2001")
-            # audiofile['TCON'] = mutagen.id3.TCON(encoding=3, text="Alternative")
+            except KeyError:
+                trunc_path = music_file[:-4] # remove type from filename
+                split_string = trunc_path.split('/')
+                n_words = len(split_string)
+                last_word = split_string[n_words-1]
+                print(f'filename:{last_word}')
 
-
-            # audiofile['TDRC'] = mutagen.id3.TDRC(encoding=3, text="1995")
-            #audiofile['TALB'] = mutagen.id3.TALB(encoding=3, text="Tank Girl Soundtrack")
-            # audiofile['TPE1'] = mutagen.id3.TPE1(encoding=3, text="Various artists")
-            # audiofile['TIT2'] = mutagen.id3.TIT2(encoding=3, text=last_word)
-
-
-        # audiofile['TALB'] = mutagen.id3.TALB(encoding=3, text="The Man-Machine")
-        # audiofile['TDRC'] = mutagen.id3.TDRC(encoding=3, text="1980")
-
-        # audiofile['TPE1'] = mutagen.id3.TPE1(encoding=3, text="A Flock of Seagulls")
-        # audiofile['TCON'] = mutagen.id3.TCON(encoding=3, text="soundtrack")
-        # audiofile['TDRC'] = mutagen.id3.TDRC(encoding=3, text="1980")
-        # audiofile.save()
+            # audiofile['TIT2'] = mutagen.id3.TIT2(encoding=3, text="I Feel Love")
+            # audiofile['TDRC'] = mutagen.id3.TDRC(encoding=3, text="1979")
+            # audiofile['TALB'] = mutagen.id3.TALB(encoding=3, text="Unknown")
+            # audiofile['TPE1'] = mutagen.id3.TPE1(encoding=3, text="Donna Summer")
+            # audiofile['TCON'] = mutagen.id3.TCON(encoding=3, text="disco")
+            # audiofile.save()

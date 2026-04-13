@@ -3181,9 +3181,14 @@ def sanitize_dequote(ze_string):
 
 # Replace colons and questions marks in filename (album cover art file, undoubtedly)
 def sanitize_decolonize(ze_string):
-    sanitized_string = ze_string.replace(':', '_')
-    sanitized_string = sanitized_string.replace('?', '_')
+    # sanitized_string = ze_string.replace(':', '_')
+    # sanitized_string = sanitized_string.replace('?', '_')
+    # sanitized_string = sanitized_string.replace('"', '_')
+    # sanitized_string = sanitized_string.replace('<', '_')
+    # sanitized_string = sanitized_string.replace('>', '_')
     #sanitized_string = sanitized_string.replace('"', '\\"')
+    trans_table = str.maketrans({':': '_', '?': '_', '"': '_', '<': '_', '>': '_'})
+    sanitized_string = ze_string.translate(trans_table)
     return(sanitized_string)
 
 # write out track recorded in audacity with the appropriate metadata

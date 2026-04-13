@@ -359,7 +359,8 @@ def get_unarted_albums_list(music_root_folder, album_cover_dir):
                 title, artist, album, year, genre, duration_s, error_flag = get_tune_metadata(music_file)
                 if album == 'Unknown Album':
                     pass # tbd
-                album_art_path = os.path.join(album_cover_dir, album + '.png')
+                album_sani = sanitize_decolonize(album)
+                album_art_path = os.path.join(album_cover_dir, album_sani + '.png')
                 if not os.path.isfile(album_art_path):
                     print(f'Missing art file for {album} by {artist}')
                     albums.append((album, artist))
@@ -369,8 +370,13 @@ def get_unarted_albums_list(music_root_folder, album_cover_dir):
 
 # replace colons and whatnot in filenames by underscores
 def sanitize_decolonize(ze_string):
-    sanitized_string = ze_string.replace(':', '_')
-    sanitized_string = sanitized_string.replace('?', '_')
+    # sanitized_string = ze_string.replace(':', '_')
+    # sanitized_string = sanitized_string.replace('?', '_')
+    # sanitized_string = sanitized_string.replace('"', '_')
+    # sanitized_string = sanitized_string.replace('<', '_')
+    # sanitized_string = sanitized_string.replace('>', '_')
+    trans_table = str.maketrans({':': '_', '?': '_', '"': '_', '<': '_', '>': '_'})
+    sanitized_string = ze_string.translate(trans_table)
     #sanitized_string = sanitized_string.replace('"', '\\"')
     return(sanitized_string)
 
