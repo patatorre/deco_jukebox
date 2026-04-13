@@ -74,7 +74,7 @@ def get_release_record_by_artist_and_album(artist_name, album_name, token):
 
             if not results:
                 print(f"No releases found for {artist_name} - {album_name}")
-                return None
+                return None, 0
 
             # Display matches to help with selection
             print(f"Found {len(results)} potential matches:")
@@ -96,20 +96,24 @@ def get_release_record_by_artist_and_album(artist_name, album_name, token):
             if release_id:
                 # print(f"Selected release ID: {release_id}")
                 # return release_id
-                return(best_match) # return the whole dict so we don't need to fetch is again
+                return best_match, 0 # return the whole dict so we don't need to fetch is again
 
             else:
                 # print("No ID found in result")
-                return None
+                return None, 0
 
         except requests.exceptions.RequestException as e:
             print(f"API request failed: {e}")
-            return None
+            if e.response is not None:
+                return None, e.response.status_code  # e.g., 404, 500, 429
+            else:
+                # No HTTP response (network error, DNS failure, timeout, etc.)
+                return None, -1
         except Exception as e:
             print(f"Unexpected error: {e}")
-            return None
+            return None, -1
     else:
-        return None
+        return None, 0
 
 def get_release_record_by_artist_and_song_title(artist_name, song_title, token):
 
@@ -138,7 +142,7 @@ def get_release_record_by_artist_and_song_title(artist_name, song_title, token):
 
             if not results:
                 print(f"No releases found for {artist_name} - {song_title}")
-                return None
+                return None, 0
 
             # Display matches to help with selection
             print(f"Found {len(results)} potential matches:")
@@ -160,20 +164,32 @@ def get_release_record_by_artist_and_song_title(artist_name, song_title, token):
             if release_id:
                 # print(f"Selected release ID: {release_id}")
                 # return release_id
-                return(best_match) # return the whole dict so we don't need to fetch is again
+                return(best_match, 0) # return the whole dict so we don't need to fetch is again
 
             else:
                 # print("No ID found in result")
-                return None
+                return None, 0
 
         except requests.exceptions.RequestException as e:
             print(f"API request failed: {e}")
-            return None
+            if e.response is not None:
+                return None, e.response.status_code  # e.g., 404, 500, 429
+            else:
+                # No HTTP response (network error, DNS failure, timeout, etc.)
+                return None, -1
         except Exception as e:
             print(f"Unexpected error: {e}")
-            return None
+            return None, -1
     else:
-        return None
+        return None, 0
+    #     except requests.exceptions.RequestException as e:
+    #         print(f"API request failed: {e}")
+    #         return None
+    #     except Exception as e:
+    #         print(f"Unexpected error: {e}")
+    #         return None
+    # else:
+    #     return None
 
 # def get_release_genres_and_year(release_id, token):
 #     url = f"https://api.discogs.com/releases/{release_id}"
@@ -278,6 +294,7 @@ def fix_TALB(audiofile, tentative_album_name, discogs_token):
     this_fix_status = 0
     lookup = 0
     release_record = None
+    rate_exceeded = 0
     try:
         this_data = audiofile['TALB']
         this_album = this_data.text[0].lower()
@@ -313,22 +330,27 @@ def fix_TALB(audiofile, tentative_album_name, discogs_token):
                 this_track = audiofile['TIT2'].text[0].lower()
                 this_artist = audiofile['TPE1'].text[0].lower()
                 print(f'fix_TALB: lookup {this_track} -> {this_artist}')
-                release_record = get_release_record_by_artist_and_song_title(this_artist, this_track, discogs_token)
+                release_record, error_code = get_release_record_by_artist_and_song_title(this_artist, this_track, discogs_token)
                 if release_record is not None:  # found something
                     #genres, year = get_release_genre_and_year(release_record)
                     this_album = get_release_album_title(release_record)
                     if this_album is not None:
                         audiofile['TALB'] = mutagen.id3.TALB(encoding=3, text=this_album)
                         this_fix_status = 1
+                else:
+                    if error_code == 429:
+                        rate_exceeded = 1
             except KeyError:
                 print('fix_TALB: KeyError')
                 pass
 
-    return this_fix_status, release_record
+    return this_fix_status, release_record, rate_exceeded
 
 
+# TDRC : release date
 def fix_TDRC(audiofile, release_record, discogs_token):
     this_fix_status = 0
+    rate_exceeded = 0
     #release_id = None
     try:
         this_data = audiofile['TDRC']
@@ -349,46 +371,49 @@ def fix_TDRC(audiofile, release_record, discogs_token):
             this_album  = audiofile['TALB'].text[0].lower()
             this_artist = audiofile['TPE1'].text[0].lower()
             if not(this_album[0:7] == 'unknown' and this_artist[0:7] == 'unknown'):
+                this_fix_status = 3
                 #print(f'fix_TDRC() this_album:{this_album} this_artist:{this_artist}')
                 # ok, got some data, so try
                 if release_record is None:
                     # try search by artist and album
                     #print(f'fix_TDRC() this_album:{this_album} this_artist:{this_artist}')
-                    release_record = get_release_record_by_artist_and_album(this_artist, this_album, discogs_token)
-                    if release_record is None: # try again with a shortened album name, if we can
+                    release_record, error_code = get_release_record_by_artist_and_album(this_artist, this_album, discogs_token)
+                    if (release_record is None) and (error_code==0): # try again with a shortened album name, if we can
                         this_album_cleaned = remove_album_qualifiers(this_album)
-                        if this_album_cleaned != this_album:
-                            release_record = get_release_record_by_artist_and_album(this_artist, this_album_cleaned, discogs_token)
+                        if this_album_cleaned != this_album :
+                            release_record, error_code = get_release_record_by_artist_and_album(this_artist, this_album_cleaned, discogs_token)
                     if release_record is None: # that didn't work, try search track
                         this_track = audiofile['TIT2'].text[0].lower()
                         #print(f'fix_TDRC() this_album:{this_album} this_artist:{this_artist} this_track:{this_track}')
-                        if release_record is None:  # Haven't been provided with a release id, so look it up
-                            release_record = get_release_record_by_artist_and_song_title(this_artist, this_track,
+                        #if (release_record is None):  # Haven't been provided with a release id, so look it up
+                        release_record, error_code = get_release_record_by_artist_and_song_title(this_artist, this_track,
                                                                                          discogs_token)
-                    if release_record is not None:  # found something
-                        genres, year = get_release_genre_and_year(release_record)
-                        if year is not None:
-                            audiofile['TDRC'] = mutagen.id3.TDRC(encoding=3, text=year)
-                            this_fix_status = 1
+                    # if release_record is not None:  # found something
+                    #     genres, year = get_release_genre_and_year(release_record)
+                    #     if year is not None:
+                    #         audiofile['TDRC'] = mutagen.id3.TDRC(encoding=3, text=year)
+                    #         this_fix_status = 1
                 if release_record is not None:
                     genre, year = get_release_genre_and_year(release_record)
                     if year is not None:
                         audiofile['TDRC'] = mutagen.id3.TDRC(encoding=3, text=str(year))
                         this_fix_status = 1
                 else:
-                    pass # no fix
-
+                    pass # no fix, but see if we exceeded the query rate
+                    if error_code == 429:
+                        rate_exceeded = 1
 
         except KeyError:
             #print('fix_TDRC: KeyError')
             # if TALB is still undefined, it means lookup failed and it's pointless to try again with the same information
             pass # no fix
 
-    return this_fix_status, release_record
+    return this_fix_status, release_record, rate_exceeded
 
-
+# TCON: Genre
 def fix_TCON(audiofile, release_record, discogs_token):
     this_fix_status = 0
+    rate_exceeded = 0
     try:
         this_data = audiofile['TCON']
         this_fix_status = 2
@@ -407,16 +432,16 @@ def fix_TCON(audiofile, release_record, discogs_token):
                 if release_record is None:
                     # try search by artist and album
                     #print(f'fix_TCON() this_album:{this_album} this_artist:{this_artist}')
-                    release_record = get_release_record_by_artist_and_album(this_artist, this_album, discogs_token)
-                    if release_record is None: # try again with a shortened album name, if we can
+                    release_record, error_code = get_release_record_by_artist_and_album(this_artist, this_album, discogs_token)
+                    if (release_record is None) and (error_code == 0): # try again with a shortened album name, if we can
                         this_album_cleaned = remove_album_qualifiers(this_album)
                         if this_album_cleaned != this_album:
-                            release_record = get_release_record_by_artist_and_album(this_artist, this_album_cleaned, discogs_token)
-                    if release_record is None: # that didn't work, try search track
+                            release_record, error_code = get_release_record_by_artist_and_album(this_artist, this_album_cleaned, discogs_token)
+                    if (release_record is None) and (error_code==0): # that didn't work, try search track
                         this_track = audiofile['TIT2'].text[0].lower()
                         #print(f'fix_TCON() this_album:{this_album} this_artist:{this_artist} this_track:{this_track}')
                         if release_record is None:  # Haven't been provided with a release id, so look it up
-                            release_record = get_release_record_by_artist_and_song_title(this_artist, this_track,
+                            release_record, error_code = get_release_record_by_artist_and_song_title(this_artist, this_track,
                                                                                          discogs_token)
 
                 if release_record is not None: # found something
@@ -424,18 +449,21 @@ def fix_TCON(audiofile, release_record, discogs_token):
                     audiofile['TCON'] = mutagen.id3.TCON(encoding=3, text=this_genre)
                     this_fix_status = 1
                 else:
-                    pass # no fix possible
+                    #pass # no fix possible
+                    if error_code == 429:
+                        rate_exceeded = 1
 
         except KeyError:
             pass # no fix
 
-    return this_fix_status, release_record
+    return this_fix_status, release_record, rate_exceeded
 
 
 def clean_up_mp3_metadata(music_root_folder, music_file_path, which_tags, discogs_token, write):
     audiotype = music_file_path[-3:]
     # report flags: 0: not found, no fix; 1:not found, fixed 2:found, no fix 3:found, fixed anyway ('Unknown' and such)
     fix_status = []
+    rate_exceeded = 0
     for tag in which_tags:
         fix_status.append(0)
 
@@ -475,20 +503,20 @@ def clean_up_mp3_metadata(music_root_folder, music_file_path, which_tags, discog
                 this_fix_status = fix_TPE1(audiofile, tentative_artist_name)
 
             if which_tag == 'TALB': # Album title
-                this_fix_status, release_rec = fix_TALB(audiofile, tentative_album_name, discogs_token)
+                this_fix_status, release_rec, rate_exceeded = fix_TALB(audiofile, tentative_album_name, discogs_token)
 
             if which_tag == 'TDRC': # Release date
-                this_fix_status, release_rec = fix_TDRC(audiofile, release_rec, discogs_token)
+                this_fix_status, release_rec, rate_exceeded = fix_TDRC(audiofile, release_rec, discogs_token)
 
             if which_tag == 'TCON': # Genre(s) - deco jukebox does not do lists of genres yet
-                this_fix_status, release_rec = fix_TCON(audiofile, release_rec, discogs_token)
+                this_fix_status, release_rec, rate_exceeded = fix_TCON(audiofile, release_rec, discogs_token)
 
             fix_status[tag_idx] = this_fix_status
 
         if write:
             audiofile.save()
 
-    return fix_status
+    return fix_status, rate_exceeded
 
 # just report on existence or non-existence of tags, including stuff marked as 'unknown'
 def survey_mp3_metadata(music_file_path, which_tags):
@@ -574,18 +602,22 @@ def clean_up_folder(music_root_folder, discogs_token):
     music_file_paths = list_nested_mp3_files(music_root_folder)
     broken_files_count = 0
     for music_file_path in music_file_paths:
-        fixes = clean_up_mp3_metadata(music_file_path,  which_tags, discogs_token,0)
-        this_report = report_string(which_tags, fixes)
-        if sum(fixes) != 8:
-            print(this_report, music_file_path)
-            broken_files_count += 1
+        fixes, rate_exceeded = clean_up_mp3_metadata(music_file_path,  which_tags, discogs_token,0)
+        if not rate_exceeded:
+            this_report = report_string(which_tags, fixes)
+            if sum(fixes) != 8:
+                print(this_report, music_file_path)
+                broken_files_count += 1
+        else:
+            print("Rate exceeded, try again in a minute.")
+            break
 
     print(f'Broken files count: {broken_files_count}')
 
 
 def fix_broken_file(music_root_folder, mp3_file_path, discogs_token):
     which_tags = ['TIT2', 'TPE1', 'TALB', 'TDRC', 'TCON']
-    fixes = clean_up_mp3_metadata(music_root_folder, mp3_file_path, which_tags, discogs_token, 1)
+    fixes, rate_exceeded = clean_up_mp3_metadata(music_root_folder, mp3_file_path, which_tags, discogs_token, 1)
     this_report = report_string(which_tags, fixes)
     print(this_report, mp3_file_path)
 
@@ -598,7 +630,7 @@ def survey_folder(music_root_folder):
     broken_files_count = 0
     broken_files = []
     for music_file_path in music_file_paths:
-        fixes = clean_up_mp3_metadata(music_root_folder, music_file_path,  which_tags, None,0)
+        fixes, rate_exceeded = clean_up_mp3_metadata(music_root_folder, music_file_path,  which_tags, None,0)
         this_report = report_string(which_tags, fixes)
 
         all_good_flag = 1
