@@ -22,6 +22,7 @@ from unidecode import unidecode
 from mutagen.id3 import ID3TimeStamp
 # import spotify_controller
 # import audacity_controller
+# import discogs_helper
 import vlc
 from pathlib import Path
 
@@ -1018,7 +1019,8 @@ class LabelPanel:
     label_width = songlist_label_width
     label_height = songlist_label_height
 
-    def __init__(self, labels_font_stack):
+    def __init__(self, labels_font_stack, reporting_label):
+        self.whatami = reporting_label
         self.page_number = 0
         self.juice_duration = 0.2 # seconds
         labels_horz_space = self.edge_right - self.edge_left
@@ -1073,10 +1075,10 @@ class LabelPanel:
         start_index = self.page_number * self.songs_per_page
         # vert_count = 0
         range_end = start_index+self.songs_per_page
-        print(f'Page number {self.page_number}')
+        print(f'{self.whatami} Page number {self.page_number}')
         if range_end >= n_filtered:
             range_end = n_filtered
-        print(f'visible range {start_index} to {range_end}')
+        print(f'{self.whatami} visible range {start_index} to {range_end}')
         for idx in range(self.songs_per_page):
             label_entry = self.visible_labels[idx]
             if idx+start_index < n_filtered:
@@ -1091,7 +1093,7 @@ class LabelPanel:
             #year = first_filtered_song['year']
             #print(f'First filtered song year = {year}')
         except Exception as e:
-            print(f'update_visible_list error {e}')
+            print(f'{self.whatami} update_visible_list error {e}')
 
     # Takes the filtered list (by selected genres, epochs) and filters by artists selected
     # Then shuffles list so we get a random selection on the Labels panel
@@ -1237,6 +1239,7 @@ class AlbumPanel:
         self.big_album_image_y = self.edge_top - self.big_album_cover_size - 10
         self.album_title_size = 20
         self.page_number = 0
+        self.open_album_page_number = 0
         self.album_open = 0 # 1 if we're looking inside an album
         self.open_album_entry = {}
         self.n_covers_horz = math.floor((self.edge_right-self.edge_left) / self.album_cover_size)
@@ -1392,7 +1395,7 @@ class AlbumPanel:
         else: # album open page: big cover, song labels
             n_album_songs = len(self.songlist)
             print(f'Songs in open album = {n_album_songs}')
-            start_index = self.page_number * self.songs_per_page
+            start_index = self.open_album_page_number * self.songs_per_page
             #this_cover_image, scale_x, scale_y = get_album_art(this_album, self.album_cover_size)
             #self.big_album_cover_sprite.image = this_cover_image
             for idx in range(self.songs_per_page):
@@ -1427,14 +1430,21 @@ class AlbumPanel:
         else:
             if self.album_open:
                 last_page_number = math.ceil(len(self.songlist) / self.songs_per_page) - 1  # misnamed, it's a page index, starts from zero
+                if down > 0:
+                    if (self.open_album_page_number < last_page_number):
+                        self.open_album_page_number += 1
+                else:  # up
+                    if self.open_album_page_number > 0:
+                        self.open_album_page_number -= 1
             else:
                 last_page_number = math.ceil(len(self.double_filtered_list) / self.albums_per_page) - 1
-            if down > 0:
-                if (self.page_number < last_page_number):
-                    self.page_number = self.page_number + 1
-            else: # up
-                if self.page_number > 0:
-                    self.page_number = self.page_number - 1
+                if down > 0:
+                    if (self.page_number < last_page_number):
+                        self.page_number = self.page_number + 1
+                else: # up
+                    if self.page_number > 0:
+                        self.page_number = self.page_number - 1
+
             self.update_visible_list()
             return(1)
 
@@ -1537,7 +1547,7 @@ class AlbumPanel:
             else: # no labels clicked, let's see the button
                 if self.back_button.clicked(click_x, click_y): # "back" button clicked, revert view
                     self.album_open = 0
-                    self.page_number = 0
+                    #self.page_number = 0
 
         else:
             # Find which album was clicked
@@ -1557,7 +1567,7 @@ class AlbumPanel:
 
                 # album-open mode
                 self.album_open = 1
-                self.page_number = 0
+                self.open_album_page_number = 0
                 self.open_album_entry = clicked_album
                 this_cover_texture, scale_x, scale_y = get_album_art(clicked_album['album'], self.big_album_cover_size)
                 # this_cover_texture, scale_x, scale_y = get_album_art(this_album,
@@ -2749,6 +2759,13 @@ def import_music(start_folders, map_artists_to_genre, map_albums_to_genre, map_c
 
     print(f"{n_visited} files examined.")
 
+    # # check how many spider-men in the full list
+    # spider_men = 0
+    # for music_record in all_music:
+    #     if music_record['filepath'] == "/home/patrick/Music/iTunes/iTunes Media/Music/The Ramones/Unknown Album/Spider-Man.mp3":
+    #         spider_men += 1
+    # print(f'Spider Men found: {spider_men}')
+
     return(all_music)
 
 
@@ -2757,6 +2774,7 @@ def import_music(start_folders, map_artists_to_genre, map_albums_to_genre, map_c
 # also treat Compilations as special case
 def build_albums_list(all_music):
     local_albums_list = []
+    first_track_list = []
     singles_list = []
 
     for music_record in all_music:
@@ -2784,21 +2802,23 @@ def build_albums_list(all_music):
         else:
             album_record = {'album':this_album, 'count':1, 'year': this_year, 'genre':this_genre, 'artist':this_artist, 'dir_path':dir_path}
             local_albums_list.append(album_record)
+            first_track_list.append(music_record) # follows the albu list one for one
 
     triaged_album_list = []
     singles_list = []
     # find singlet albums - discard album, add to singles list
-    for album_record in local_albums_list:
+    for album_record, music_record in zip(local_albums_list, first_track_list):
         if album_record['count'] > 1:
             triaged_album_list.append(album_record)
             #print(f'Added to triaged list with {album_record["count"]} album intitled {album_record["album"]}')
         else:#
+            singles_list.append(music_record)
             # welp, now gotta find that song from the song list, 'case we shed some info on the way
             # Since we've established there's only one song in the album, shouldn't be a problem
-            for music_record in all_music:
-                if music_record['album'] == album_record['album']:
-                    singles_list.append(music_record)
-                    break
+            # for music_record in all_music:
+            #     if music_record['album'] == album_record['album']:
+            #         singles_list.append(music_record)
+            #         break
 
     # for album_record in triaged_album_list:
     #     append_fetch_cover_art_list(album_record['album']) # adds a to-fetch item, if not exists
@@ -3203,6 +3223,10 @@ def export_track(playlist_item):
     album_id = playlist_item['album_id']
     #album_cover_addrs = playlist_item['album_cover']
 
+    # Re-try fetch genre and year if absent
+    if year == 1066: # genre will be 'unknown' as well
+        genre, year = discogs_helper.get_album_genre_and_year(artist, album)
+
     # Sanitize
     artist = sanitize(artist)
     album = sanitize(album)
@@ -3257,7 +3281,7 @@ def export_track(playlist_item):
 
 n_visited = 0
 n_read = 0
-eos_flag = 0 # set to 1 whenever get get on_eos or on_player_eos
+eos_flag = 0 # set to 1 whenever on_eos or on_player_eos
 eos_time = time.time()
 # window = pyglet.window.Window(width=screen_width, height=screen_height, fullscreen=True)
 
@@ -3369,11 +3393,18 @@ print(map_albums_to_genre)
 print(map_artists_to_genre)
 albums_list, all_singles_list = build_albums_list(all_music)
 
+# # check how many spider-men in the singles list
+# spider_men = 0
+# for music_record in all_singles_list:
+#     if music_record['filepath'] == "/home/patrick/Music/iTunes/iTunes Media/Music/The Ramones/Unknown Album/Spider-Man.mp3":
+#         spider_men += 1
+# print(f'Spider Men found in singles list: {spider_men}')
+
 tab_buttons = TopButtons()
 button_panel = ButtonPanel(button_on_epochs, button_on_genre, button_off, genres_list, buttons_font_stack)
-tracks_panel = LabelPanel(labels_font_stack)
-singles_panel = LabelPanel(labels_font_stack)
-spotify_panel = LabelPanel(labels_font_stack)
+tracks_panel = LabelPanel(labels_font_stack, 'tracks')
+singles_panel = LabelPanel(labels_font_stack, 'singles')
+spotify_panel = LabelPanel(labels_font_stack, 'sptfy')
 albums_panel = AlbumPanel(labels_font_stack)
 
 artist_list = ArtistsPanel(labels_font_stack)
@@ -3523,7 +3554,7 @@ def on_mouse_press(x, y, button, modifiers):
 
         artist_list.page_number = 0
         artist_list.all_selected = 1
-        artist_list.update_artists_list(tracks_panel.filtered_list)
+        #artist_list.update_artists_list(tracks_panel.filtered_list)
         artist_list.update_visible_list()
         tracks_panel.update_double_filtered_list(artist_list)
         albums_panel.update_double_filtered_list(artist_list)
